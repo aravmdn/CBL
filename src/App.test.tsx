@@ -76,6 +76,8 @@ const stream = {
   getTracks: () => [{ stop: vi.fn() }],
 }
 
+let writeClipboardText = vi.fn(async () => undefined)
+
 function installCanvasMock() {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
     addColorStop: vi.fn(),
@@ -101,6 +103,7 @@ function installCanvasMock() {
 }
 
 beforeEach(() => {
+  writeClipboardText = vi.fn(async () => undefined)
   vi.stubGlobal('Audio', FakeAudioElement)
   vi.stubGlobal('AudioContext', FakeAudioContext)
   vi.stubGlobal('webkitAudioContext', FakeAudioContext)
@@ -119,10 +122,13 @@ beforeEach(() => {
 
     return new Response(new ArrayBuffer(8), { status: 200 })
   }))
-  Object.defineProperty(navigator, 'mediaDevices', {
-    configurable: true,
-    value: {
+  vi.stubGlobal('navigator', {
+    ...navigator,
+    mediaDevices: {
       getUserMedia: vi.fn(async () => stream),
+    },
+    clipboard: {
+      writeText: writeClipboardText,
     },
   })
   Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', {
@@ -175,6 +181,27 @@ describe('App', () => {
 
     await waitFor(() => expect(screen.getByText('first light')).toBeInTheDocument())
     expect(screen.getByText('Poem ready')).toBeInTheDocument()
+  })
+
+  it('supports sample transport controls', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Skip sample forward 10 seconds' }))
+    expect(screen.getByText('00:10')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Restart sample' }))
+    expect(screen.getAllByText('00:00').length).toBeGreaterThan(0)
+  })
+
+  it('copies the current poem to the clipboard', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Copy poem' }))
+
+    await expect(navigator.clipboard.readText()).resolves.toContain('a quiet bloom')
+    expect(screen.getByRole('status')).toHaveTextContent('Copied')
   })
 
   it('renders a clear API error state', async () => {

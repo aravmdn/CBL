@@ -1,5 +1,5 @@
-import { Camera, CircleHelp, Copy, Feather, Pause, Play, RefreshCw, Settings, SkipBack, SkipForward, Sparkles, Volume2, Waves } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Camera, Check, Copy, Feather, Pause, Play, RefreshCw, SkipBack, SkipForward, Sparkles, Volume2, Waves } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useAudioSample } from './audio/useAudioSample'
 import { useCamera } from './camera/useCamera'
@@ -45,6 +45,7 @@ function App() {
   const [generationStatus, setGenerationStatus] = useState<'idle' | 'generating' | 'ready' | 'error'>('idle')
   const [error, setError] = useState('')
   const [hasRequestedPoem, setHasRequestedPoem] = useState(false)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
 
   const progress = useMemo(() => {
     if (audio.duration <= 0) {
@@ -57,6 +58,7 @@ function App() {
   const generate = useCallback(async () => {
     setGenerationStatus('generating')
     setError('')
+    setCopyStatus('idle')
 
     try {
       const features = await audio.analyzeSample()
@@ -71,6 +73,22 @@ function App() {
     }
   }, [audio])
 
+  const generationLabel = useMemo(() => {
+    if (generationStatus === 'ready') {
+      return 'Poem ready'
+    }
+
+    if (generationStatus === 'generating') {
+      return 'Listening'
+    }
+
+    if (generationStatus === 'error') {
+      return error.includes('API_KEY') ? 'Needs API key' : 'Try again'
+    }
+
+    return 'Ready'
+  }, [error, generationStatus])
+
   const togglePlayback = useCallback(async () => {
     const shouldGenerate = !audio.isPlaying && !hasRequestedPoem
     await audio.togglePlayback()
@@ -79,6 +97,39 @@ function App() {
       void generate()
     }
   }, [audio, generate, hasRequestedPoem])
+
+  const copyPoem = useCallback(async () => {
+    const poemText = poem.lines.join('\n')
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(poemText)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = poemText
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        document.body.append(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        textArea.remove()
+      }
+
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('error')
+    }
+  }, [poem.lines])
+
+  useEffect(() => {
+    if (copyStatus === 'idle') {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => setCopyStatus('idle'), 2400)
+    return () => window.clearTimeout(timeoutId)
+  }, [copyStatus])
 
   return (
     <main className="app-shell">
@@ -90,10 +141,9 @@ function App() {
             <Waves size={18} />
             Sample
           </h2>
-          <button className="select-button" type="button">
+          <div className="select-button static-control" aria-label="Selected sample">
             <span>Luminous Drift</span>
-            <span aria-hidden="true">⌄</span>
-          </button>
+          </div>
           <div className="time-row">
             <span>{formatTime(audio.currentTime)}</span>
             <span>{formatTime(audio.duration || 48)}</span>
@@ -103,13 +153,13 @@ function App() {
           </div>
 
           <div className="transport" aria-label="Sample transport controls">
-            <button type="button" aria-label="Restart sample" onClick={audio.pause}>
+            <button type="button" aria-label="Restart sample" onClick={audio.restart}>
               <SkipBack size={22} />
             </button>
             <button className="play-button" type="button" aria-label={audio.isPlaying ? 'Pause sample' : 'Play sample'} onClick={togglePlayback}>
               {audio.isPlaying ? <Pause size={26} /> : <Play size={26} />}
             </button>
-            <button type="button" aria-label="Skip sample">
+            <button type="button" aria-label="Skip sample forward 10 seconds" onClick={() => audio.seekBy(10)}>
               <SkipForward size={22} />
             </button>
           </div>
@@ -137,7 +187,7 @@ function App() {
             <Sparkles size={18} />
             {generationStatus === 'generating' ? 'Listening' : 'Generate'}
           </button>
-          <p className="micro-label">{generationStatus === 'ready' ? 'Poem ready' : generationStatus === 'error' ? 'Needs API key' : 'Listening'}</p>
+          <p className="micro-label">{generationLabel}</p>
           <div className="mini-bars" aria-hidden="true">
             {audio.bars.slice(0, 16).map((bar, index) => (
               <span key={index} style={{ height: `${8 + bar * 20}px` }} />
@@ -150,10 +200,9 @@ function App() {
             <Camera size={18} />
             Camera
           </h2>
-          <button className="select-button" type="button">
+          <div className="select-button static-control" aria-label="Selected camera">
             <span>{camera.label}</span>
-            <span aria-hidden="true">⌄</span>
-          </button>
+          </div>
           <div className="permission-row">
             <span>Permission</span>
             <strong className={camera.status === 'granted' ? 'granted' : ''}>
@@ -164,17 +213,6 @@ function App() {
 
         <p className="tip">Tip: Keep the sample playing for richer visuals and poetry.</p>
 
-        <nav className="rail-icons" aria-label="Prototype utilities">
-          <button type="button" aria-label="Settings">
-            <Settings size={20} />
-          </button>
-          <button type="button" aria-label="Effects">
-            <Sparkles size={20} />
-          </button>
-          <button type="button" aria-label="Help">
-            <CircleHelp size={20} />
-          </button>
-        </nav>
       </aside>
 
       <CameraStage
@@ -202,13 +240,18 @@ function App() {
             <button type="button" aria-label="Regenerate poem" onClick={generate}>
               <RefreshCw size={18} />
             </button>
-            <button type="button" aria-label="Copy poem">
-              <Copy size={18} />
+            <button type="button" aria-label={copyStatus === 'copied' ? 'Poem copied' : 'Copy poem'} onClick={copyPoem}>
+              {copyStatus === 'copied' ? <Check size={18} /> : <Copy size={18} />}
             </button>
           </div>
         </header>
 
         {error ? <p className="error-message" role="alert">{error}</p> : null}
+        {copyStatus !== 'idle' ? (
+          <p className={`copy-status ${copyStatus}`} role="status">
+            {copyStatus === 'copied' ? 'Copied' : 'Copy failed'}
+          </p>
+        ) : null}
 
         <ol className="poem-lines">
           {poem.lines.map((line, index) => (

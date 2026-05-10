@@ -28,6 +28,13 @@ export function useAudioSample(sampleUrl: string) {
   const [bars, setBars] = useState(createSilentBars)
   const [features, setFeatures] = useState<AudioFeatures | null>(null)
 
+  const stopAnalyser = useCallback(() => {
+    if (animationRef.current !== null) {
+      window.cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+  }, [])
+
   const ensureAudioContext = useCallback(async () => {
     const audio = audioRef.current
     const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
@@ -123,11 +130,40 @@ export function useAudioSample(sampleUrl: string) {
     const audio = audioRef.current
     audio?.pause()
     setIsPlaying(false)
-    if (animationRef.current !== null) {
-      window.cancelAnimationFrame(animationRef.current)
-      animationRef.current = null
+    stopAnalyser()
+  }, [stopAnalyser])
+
+  const restart = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) {
+      return
     }
-  }, [])
+
+    audio.currentTime = 0
+    setCurrentTime(0)
+
+    if (!isPlaying) {
+      setLiveEnergy(0)
+      setBars(createSilentBars())
+    }
+  }, [isPlaying])
+
+  const seekBy = useCallback(
+    (seconds: number) => {
+      const audio = audioRef.current
+      if (!audio) {
+        return
+      }
+
+      const mediaDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : duration
+      const upperBound = mediaDuration > 0 ? mediaDuration : Number.POSITIVE_INFINITY
+      const nextTime = Math.max(0, Math.min(upperBound, audio.currentTime + seconds))
+
+      audio.currentTime = nextTime
+      setCurrentTime(nextTime)
+    },
+    [duration],
+  )
 
   const togglePlayback = useCallback(async () => {
     if (isPlaying) {
@@ -169,6 +205,11 @@ export function useAudioSample(sampleUrl: string) {
     const onEnded = () => {
       setIsPlaying(false)
       setLiveEnergy(0)
+      setBars(createSilentBars())
+      if (animationRef.current !== null) {
+        window.cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
     }
 
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
@@ -199,6 +240,8 @@ export function useAudioSample(sampleUrl: string) {
     analyzeSample,
     play,
     pause,
+    restart,
+    seekBy,
     setVolume,
     togglePlayback,
   }

@@ -16,6 +16,11 @@ test('plays the sample, generates poetry, and renders a nonblank canvas', async 
   await expect(page.getByText('CBL')).toBeVisible()
   await expect(page.getByText('Luminous Drift')).toBeVisible()
 
+  await page.getByRole('button', { name: 'Skip sample forward 10 seconds' }).click()
+  await expect(page.getByText('00:10')).toBeVisible()
+  await page.getByRole('button', { name: 'Restart sample' }).click()
+  await expect(page.getByText('00:00').first()).toBeVisible()
+
   await page.getByRole('button', { name: 'Play sample' }).first().click()
   await expect(page.getByText('first light')).toBeVisible()
   await expect(page.getByText('Poem ready')).toBeVisible()
