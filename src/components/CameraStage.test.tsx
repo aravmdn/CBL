@@ -6,7 +6,9 @@ import type { TrackingAnchors } from '../types'
 
 const context = {
   arc: vi.fn(),
+  bezierCurveTo: vi.fn(),
   beginPath: vi.fn(),
+  closePath: vi.fn(),
   createLinearGradient: () => ({ addColorStop: vi.fn() }),
   createRadialGradient: () => ({ addColorStop: vi.fn() }),
   drawImage: vi.fn(),
@@ -42,7 +44,6 @@ function renderStage(personDetected: boolean, isPlaying: boolean) {
       isPlaying={isPlaying}
       liveEnergy={0.5}
       personDetected={personDetected}
-      poemLines={['first light', 'finds the room', 'under your breath', 'the sample turns', 'into weather']}
       trackingStatus={personDetected ? 'tracking' : 'seeking'}
       videoRef={createRef<HTMLVideoElement | null>()}
     />,
@@ -78,7 +79,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('CameraStage person-gated effects', () => {
+describe('CameraStage aura effects', () => {
   it('does not draw poem text or effect strokes before a person is detected', () => {
     renderStage(false, true)
 
@@ -90,14 +91,15 @@ describe('CameraStage person-gated effects', () => {
     expect(context.stroke).not.toHaveBeenCalled()
   })
 
-  it('draws body-anchored effects only after person detection and playback', () => {
+  it('draws body-anchored aura without line strokes after person detection and playback', () => {
     renderStage(true, true)
 
     act(() => {
       frameCallback?.(100)
     })
 
-    expect(context.fillText).toHaveBeenCalled()
-    expect(context.stroke).toHaveBeenCalled()
+    expect(context.fillText).not.toHaveBeenCalled()
+    expect(context.fill).toHaveBeenCalled()
+    expect(context.stroke).not.toHaveBeenCalled()
   })
 })

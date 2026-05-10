@@ -222,7 +222,6 @@ function App() {
         isPlaying={audio.isPlaying}
         liveEnergy={audio.liveEnergy}
         personDetected={tracking.personDetected}
-        poemLines={poem.lines}
         trackingStatus={tracking.trackingStatus}
         videoRef={camera.videoRef}
       />

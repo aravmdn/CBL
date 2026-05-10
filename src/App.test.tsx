@@ -82,8 +82,10 @@ function installCanvasMock() {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
     addColorStop: vi.fn(),
     arc: vi.fn(),
+    bezierCurveTo: vi.fn(),
     beginPath: vi.fn(),
     clearRect: vi.fn(),
+    closePath: vi.fn(),
     createLinearGradient: () => ({ addColorStop: vi.fn() }),
     createRadialGradient: () => ({ addColorStop: vi.fn() }),
     drawImage: vi.fn(),
