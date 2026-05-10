@@ -10,6 +10,7 @@ type CameraStageProps = {
   isPlaying: boolean
   liveEnergy: number
   personDetected: boolean
+  poemLines: string[]
   trackingStatus: TrackingStatus
   videoRef: RefObject<HTMLVideoElement | null>
 }
@@ -165,8 +166,52 @@ function drawBodyAura(
   context.restore()
 }
 
+function drawAuraPoetry(
+  context: CanvasRenderingContext2D,
+  anchors: TrackingAnchors,
+  poemLines: string[],
+  width: number,
+  height: number,
+  time: number,
+  energy: number,
+  reduceMotion: boolean,
+) {
+  if (poemLines.length === 0) {
+    return
+  }
+
+  const motion = reduceMotion ? 0 : time * 0.00055
+  const anchorNames: Array<keyof TrackingAnchors> = ['head', 'leftShoulder', 'rightShoulder', 'torso']
+  const visibleLines = poemLines.slice(0, 6)
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.font = 'italic 16px "Inter", "Segoe UI", sans-serif'
+  context.textBaseline = 'middle'
+  context.textAlign = 'center'
+
+  visibleLines.forEach((line, index) => {
+    const anchor = getAnchorPoint(anchors, anchorNames[index % anchorNames.length], width, height)
+    const phase = motion * (0.9 + index * 0.12) + index * 1.18
+    const orbitX = 132 + index * 23 + energy * 90
+    const orbitY = 58 + (index % 3) * 18 + energy * 44
+    const x = Math.max(84, Math.min(width - 84, anchor.x + Math.cos(phase) * orbitX))
+    const y = Math.max(52, Math.min(height - 72, anchor.y + Math.sin(phase * 1.35) * orbitY))
+    const alpha = 0.34 + energy * 0.28 + Math.sin(phase + index) * 0.08
+    const glowColor = auroraPalette[index % auroraPalette.length]
+
+    context.shadowColor = colorWithAlpha(glowColor, 0.55)
+    context.shadowBlur = 14 + energy * 16
+    context.fillStyle = `rgba(255, 255, 255, ${Math.max(0.28, Math.min(0.72, alpha))})`
+    context.fillText(line, x, y, Math.min(260, width * 0.34))
+  })
+
+  context.shadowBlur = 0
+  context.restore()
+}
+
 export function CameraStage(props: CameraStageProps) {
-  const { anchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, trackingStatus, videoRef } = props
+  const { anchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, poemLines, trackingStatus, videoRef } = props
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const auraAnchors = useMemo<AuraAnchor[]>(
     () => [
@@ -252,6 +297,7 @@ export function CameraStage(props: CameraStageProps) {
 
       if (effectsActive) {
         drawBodyAura(context, anchors, cssWidth, cssHeight, time, energy, reduceMotion, auraAnchors)
+        drawAuraPoetry(context, anchors, poemLines, cssWidth, cssHeight, time, energy, reduceMotion)
 
         const waveBase = cssHeight - 42
         const waveStart = cssWidth * 0.18
@@ -280,7 +326,7 @@ export function CameraStage(props: CameraStageProps) {
 
     animationId = window.requestAnimationFrame(render)
     return () => window.cancelAnimationFrame(animationId)
-  }, [anchors, auraAnchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, videoRef])
+  }, [anchors, auraAnchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, poemLines, videoRef])
 
   return (
     <section className="stage" aria-label="Camera visual effects stage">

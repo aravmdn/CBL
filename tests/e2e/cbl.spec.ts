@@ -14,7 +14,7 @@ test('plays the sample, generates poetry, and renders a nonblank canvas', async 
 
   await page.goto('/')
   await expect(page.getByText('CBL')).toBeVisible()
-  await expect(page.getByText('Luminous Drift')).toBeVisible()
+  await expect(page.getByRole('slider', { name: 'Volume' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Skip sample forward 10 seconds' }).click()
   await expect(page.getByText('00:10')).toBeVisible()

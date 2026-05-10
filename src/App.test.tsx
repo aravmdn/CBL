@@ -148,16 +148,13 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('renders the prototype shell and granted camera state', async () => {
+  it('renders the minimal shell and poem panel', () => {
     render(<App />)
 
     expect(screen.getByText('CBL')).toBeInTheDocument()
-    expect(screen.getByText('Sample')).toBeInTheDocument()
-    expect(screen.getAllByText('Generate').length).toBeGreaterThan(0)
-    expect(screen.getByText('Camera')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Play sample' }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument()
     expect(screen.getByText('Poem')).toBeInTheDocument()
-
-    await waitFor(() => expect(screen.getByText('Granted')).toBeInTheDocument())
   })
 
   it('shows a denied camera state without crashing', async () => {
@@ -172,14 +169,14 @@ describe('App', () => {
 
     render(<App />)
 
-    await waitFor(() => expect(screen.getByText('Denied')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Camera fallback')).toBeInTheDocument())
   })
 
   it('generates and displays a poem from the API', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Generate' }))
+    await user.click(screen.getByRole('button', { name: 'Regenerate poem' }))
 
     await waitFor(() => expect(screen.getByText('first light')).toBeInTheDocument())
     expect(screen.getByText('Poem ready')).toBeInTheDocument()
@@ -221,7 +218,7 @@ describe('App', () => {
 
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: 'Generate' }))
+    await user.click(screen.getByRole('button', { name: 'Regenerate poem' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('OPENROUTER_API_KEY'))
     expect(screen.getByText('Needs API key')).toBeInTheDocument()

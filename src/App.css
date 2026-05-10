@@ -29,12 +29,12 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 276px minmax(0, 1fr) 292px;
+  grid-template-columns: 126px minmax(0, 1fr) 236px;
+  align-items: center;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 52% 42%, rgba(244, 201, 121, 0.16), transparent 26%),
-    radial-gradient(circle at 78% 70%, rgba(142, 232, 255, 0.16), transparent 34%),
-    #090e12;
+    radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.08), transparent 28%),
+    #050506;
 }
 
 .control-rail,
@@ -43,30 +43,38 @@ button {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  border-color: rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(20, 27, 32, 0.9), rgba(15, 24, 30, 0.82));
-  backdrop-filter: blur(18px);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(22px) saturate(120%);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.38);
 }
 
 .control-rail {
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  width: 96px;
+  min-height: auto;
+  margin-left: 16px;
+  padding: 14px 12px;
+  border-radius: 28px;
+  gap: 14px;
 }
 
 .poem-panel {
   align-self: center;
-  min-height: min(86vh, 840px);
-  margin: 24px 22px 24px 0;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 22px;
+  width: 218px;
+  height: min(62vh, 620px);
+  min-height: 420px;
+  margin-right: 16px;
+  border-radius: 24px;
+  overflow: hidden;
 }
 
 .brand {
-  padding: 22px 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 0 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 34px;
+  font-size: 19px;
+  line-height: 1;
+  text-align: center;
   letter-spacing: 0;
 }
 
@@ -120,9 +128,8 @@ button {
 .permission-row {
   display: flex;
   justify-content: space-between;
-  margin-top: 18px;
-  color: rgba(247, 244, 235, 0.58);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
 }
 
 .permission-row strong {
@@ -131,30 +138,30 @@ button {
 }
 
 .permission-row strong.granted {
-  color: #67df8d;
+  color: #fff;
 }
 
 .progress-track {
   width: 100%;
-  height: 6px;
-  margin: 10px 0 24px;
+  height: 3px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .progress-track span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #8ee8ff, #d2beff, #f4c979);
+  background: #fff;
 }
 
 .transport {
   display: grid;
-  grid-template-columns: 1fr 64px 1fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 12px;
+  justify-items: center;
+  gap: 10px;
 }
 
 .transport button,
@@ -165,40 +172,62 @@ button {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: transparent;
-  color: rgba(247, 244, 235, 0.84);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.84);
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
-.transport button:first-child {
-  justify-self: end;
+.transport button:hover,
+.poem-actions button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 .transport .play-button {
-  width: 58px;
-  height: 58px;
-  border: 1px solid rgba(142, 232, 255, 0.72);
-  background: radial-gradient(circle, rgba(142, 232, 255, 0.16), rgba(255, 255, 255, 0.04));
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.1);
   box-shadow:
-    0 0 0 4px rgba(142, 232, 255, 0.06),
-    0 0 28px rgba(142, 232, 255, 0.3);
+    0 0 0 4px rgba(255, 255, 255, 0.05),
+    0 0 24px rgba(255, 255, 255, 0.2);
+}
+
+.transport button:first-child {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.transport button:last-child {
+  grid-column: 2;
+  grid-row: 2;
 }
 
 .volume-row {
   display: grid;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 16px 1fr;
   align-items: center;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 8px;
 }
 
 .volume-row input {
-  accent-color: #f7f4eb;
+  width: 100%;
+  accent-color: #fff;
 }
 
 .micro-label {
-  margin: 16px 0 12px;
-  color: rgba(247, 244, 235, 0.74);
-  font-size: 14px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
 }
 
 .mini-bars {
@@ -266,10 +295,11 @@ button {
   justify-content: center;
   gap: 10px;
   min-height: 52px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: rgba(12, 18, 22, 0.48);
-  color: #bceeff;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
 }
 
@@ -286,8 +316,8 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #8ee8ff;
-  box-shadow: 0 0 14px rgba(142, 232, 255, 0.9);
+  background: #fff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.8);
   opacity: 0.7;
 }
 
@@ -296,72 +326,76 @@ button {
 }
 
 .poem-panel header {
-  padding: 28px 28px 0;
+  padding: 18px 18px 0;
 }
 
 .poem-panel header h2 {
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 15px;
 }
 
 .poem-actions {
   display: flex;
-  gap: 12px;
-  margin: 18px 0 26px;
+  gap: 8px;
+  margin: 14px 0 18px;
 }
 
 .poem-actions button {
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .error-message {
-  margin: 0 28px 18px;
-  padding: 12px;
-  border: 1px solid rgba(244, 201, 121, 0.35);
+  margin: 0 18px 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 8px;
-  background: rgba(244, 201, 121, 0.08);
-  color: #ffe0a2;
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 12px;
   line-height: 1.4;
 }
 
 .copy-status {
-  margin: 0 28px 16px;
-  color: #bceeff;
-  font-size: 13px;
+  margin: 0 18px 12px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
 }
 
 .copy-status.error {
-  color: #ffe0a2;
+  color: #fff;
 }
 
 .poem-lines {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 22px;
-  margin: 0 28px;
-  padding: 0;
+  gap: 12px;
+  margin: 0 18px;
+  padding: 0 4px 8px 0;
+  overflow: auto;
   list-style: none;
 }
 
 .poem-lines li {
   position: relative;
   display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 16px;
-  min-height: 34px;
+  grid-template-columns: 10px 1fr;
+  gap: 10px;
+  min-height: 24px;
 }
 
 .poem-lines li::before {
   position: absolute;
-  top: 18px;
-  bottom: -28px;
-  left: 5px;
+  top: 13px;
+  bottom: -17px;
+  left: 3px;
   width: 1px;
   content: "";
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .poem-lines li:last-child::before {
@@ -369,28 +403,29 @@ button {
 }
 
 .timeline-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   margin-top: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .poem-lines li:first-child .timeline-dot {
-  background: #8ee8ff;
-  box-shadow: 0 0 18px rgba(142, 232, 255, 0.9);
+  background: #fff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
 }
 
 .poem-lines p {
   margin: 0;
-  color: rgba(247, 244, 235, 0.86);
-  font-size: 16px;
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .listening-pill {
-  min-height: 56px;
-  margin: auto 28px 28px;
+  min-height: 40px;
+  margin: 12px 18px 18px;
+  font-size: 13px;
 }
 
 @keyframes pulse {
@@ -413,68 +448,76 @@ button {
 
   .app-shell {
     grid-template-columns: 1fr;
-  }
-
-  .control-rail,
-  .poem-panel {
-    min-height: auto;
+    align-items: stretch;
   }
 
   .control-rail {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: fixed;
+    right: auto;
+    bottom: 14px;
+    left: 50%;
+    width: min(88vw, 360px);
+    min-height: auto;
+    margin: 0;
+    padding: 10px 12px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    flex-direction: row;
+    align-items: center;
   }
 
   .brand,
-  .tip,
-  .rail-icons {
+  .micro-label,
+  .volume-row {
     display: none;
   }
 
-  .rail-section {
-    padding: 18px;
+  .control-rail .transport {
+    width: 112px;
+    flex: 0 0 auto;
   }
 
   .stage,
   .effects-canvas {
-    min-height: 68vh;
-    height: 68vh;
+    min-height: 100vh;
+    height: 100vh;
   }
 
   .poem-panel {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 210px;
+    height: min(50vh, 430px);
+    min-height: 320px;
     margin: 0;
-    border-width: 1px 0 0;
-    border-radius: 0;
+    border-radius: 22px;
   }
 }
 
 @media (max-width: 720px) {
   .control-rail {
-    grid-template-columns: 1fr;
+    width: calc(100vw - 24px);
   }
 
-  .rail-section {
-    padding: 16px;
-  }
-
-  .stage,
-  .effects-canvas {
-    min-height: 58vh;
-    height: 58vh;
+  .poem-panel {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    height: 34vh;
+    min-height: 260px;
   }
 
   .poem-panel header,
   .poem-lines,
   .listening-pill,
   .error-message {
-    margin-right: 18px;
-    margin-left: 18px;
+    margin-right: 14px;
+    margin-left: 14px;
   }
 
   .poem-panel header {
-    padding-right: 18px;
-    padding-left: 18px;
+    padding-right: 14px;
+    padding-left: 14px;
   }
 }

@@ -1,4 +1,4 @@
-import { Camera, Check, Copy, Feather, Pause, Play, RefreshCw, SkipBack, SkipForward, Sparkles, Volume2, Waves } from 'lucide-react'
+import { Check, Copy, Pause, Play, RefreshCw, SkipBack, SkipForward, Volume2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useAudioSample } from './audio/useAudioSample'
@@ -136,83 +136,40 @@ function App() {
       <aside className="control-rail" aria-label="Controls">
         <div className="brand">CBL</div>
 
-        <section className="rail-section">
-          <h2>
-            <Waves size={18} />
-            Sample
-          </h2>
-          <div className="select-button static-control" aria-label="Selected sample">
-            <span>Luminous Drift</span>
-          </div>
-          <div className="time-row">
-            <span>{formatTime(audio.currentTime)}</span>
-            <span>{formatTime(audio.duration || 48)}</span>
-          </div>
-          <div className="progress-track" aria-label="Sample progress">
-            <span style={{ width: `${progress}%` }} />
-          </div>
-
-          <div className="transport" aria-label="Sample transport controls">
-            <button type="button" aria-label="Restart sample" onClick={audio.restart}>
-              <SkipBack size={22} />
-            </button>
-            <button className="play-button" type="button" aria-label={audio.isPlaying ? 'Pause sample' : 'Play sample'} onClick={togglePlayback}>
-              {audio.isPlaying ? <Pause size={26} /> : <Play size={26} />}
-            </button>
-            <button type="button" aria-label="Skip sample forward 10 seconds" onClick={() => audio.seekBy(10)}>
-              <SkipForward size={22} />
-            </button>
-          </div>
-
-          <label className="volume-row">
-            <Volume2 size={18} />
-            <input
-              aria-label="Volume"
-              max="1"
-              min="0"
-              onChange={(event) => audio.setVolume(Number(event.target.value))}
-              step="0.01"
-              type="range"
-              value={audio.volume}
-            />
-          </label>
-        </section>
-
-        <section className="rail-section">
-          <h2>
-            <RefreshCw size={18} />
-            Generate
-          </h2>
-          <button className="generate-button" disabled={generationStatus === 'generating'} onClick={generate} type="button">
-            <Sparkles size={18} />
-            {generationStatus === 'generating' ? 'Listening' : 'Generate'}
+        <div className="transport" aria-label="Sample transport controls">
+          <button type="button" aria-label="Restart sample" onClick={audio.restart}>
+            <SkipBack size={20} />
           </button>
-          <p className="micro-label">{generationLabel}</p>
-          <div className="mini-bars" aria-hidden="true">
-            {audio.bars.slice(0, 16).map((bar, index) => (
-              <span key={index} style={{ height: `${8 + bar * 20}px` }} />
-            ))}
-          </div>
-        </section>
+          <button className="play-button" type="button" aria-label={audio.isPlaying ? 'Pause sample' : 'Play sample'} onClick={togglePlayback}>
+            {audio.isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          </button>
+          <button type="button" aria-label="Skip sample forward 10 seconds" onClick={() => audio.seekBy(10)}>
+            <SkipForward size={20} />
+          </button>
+        </div>
 
-        <section className="rail-section">
-          <h2>
-            <Camera size={18} />
-            Camera
-          </h2>
-          <div className="select-button static-control" aria-label="Selected camera">
-            <span>{camera.label}</span>
-          </div>
-          <div className="permission-row">
-            <span>Permission</span>
-            <strong className={camera.status === 'granted' ? 'granted' : ''}>
-              {camera.status === 'granted' ? 'Granted' : camera.status === 'pending' ? 'Pending' : 'Denied'}
-            </strong>
-          </div>
-        </section>
+        <div className="time-row">
+          <span>{formatTime(audio.currentTime)}</span>
+          <span>{formatTime(audio.duration || 48)}</span>
+        </div>
+        <div className="progress-track" aria-label="Sample progress">
+          <span style={{ width: `${progress}%` }} />
+        </div>
 
-        <p className="tip">Tip: Keep the sample playing for richer visuals and poetry.</p>
+        <label className="volume-row">
+          <Volume2 size={16} />
+          <input
+            aria-label="Volume"
+            max="1"
+            min="0"
+            onChange={(event) => audio.setVolume(Number(event.target.value))}
+            step="0.01"
+            type="range"
+            value={audio.volume}
+          />
+        </label>
 
+        <p className="micro-label" aria-live="polite">{generationLabel}</p>
       </aside>
 
       <CameraStage
@@ -222,16 +179,14 @@ function App() {
         isPlaying={audio.isPlaying}
         liveEnergy={audio.liveEnergy}
         personDetected={tracking.personDetected}
+        poemLines={poem.lines}
         trackingStatus={tracking.trackingStatus}
         videoRef={camera.videoRef}
       />
 
       <aside className="poem-panel" aria-label="Poem">
         <header>
-          <h2>
-            <Feather size={20} />
-            Poem
-          </h2>
+          <h2>Poem</h2>
           <div className="poem-actions">
             <button type="button" aria-label={audio.isPlaying ? 'Pause sample' : 'Play sample'} onClick={togglePlayback}>
               {audio.isPlaying ? <Pause size={18} /> : <Play size={18} />}
@@ -263,7 +218,7 @@ function App() {
 
         <div className="listening-pill">
           <span className={`status-dot ${audio.isPlaying ? 'active' : ''}`} />
-          Listening
+          {audio.isPlaying ? 'Listening' : 'Idle'}
         </div>
       </aside>
     </main>

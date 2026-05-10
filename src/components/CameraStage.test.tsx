@@ -44,6 +44,7 @@ function renderStage(personDetected: boolean, isPlaying: boolean) {
       isPlaying={isPlaying}
       liveEnergy={0.5}
       personDetected={personDetected}
+      poemLines={['first light', 'finds the room', 'under your breath', 'the sample turns', 'into weather']}
       trackingStatus={personDetected ? 'tracking' : 'seeking'}
       videoRef={createRef<HTMLVideoElement | null>()}
     />,
@@ -91,14 +92,14 @@ describe('CameraStage aura effects', () => {
     expect(context.stroke).not.toHaveBeenCalled()
   })
 
-  it('draws body-anchored aura without line strokes after person detection and playback', () => {
+  it('draws body-anchored aura and drifting poem text without line strokes after person detection and playback', () => {
     renderStage(true, true)
 
     act(() => {
       frameCallback?.(100)
     })
 
-    expect(context.fillText).not.toHaveBeenCalled()
+    expect(context.fillText).toHaveBeenCalled()
     expect(context.fill).toHaveBeenCalled()
     expect(context.stroke).not.toHaveBeenCalled()
   })
