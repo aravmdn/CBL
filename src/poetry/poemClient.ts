@@ -1,15 +1,14 @@
-import type { AudioFeatures, PoemResponse } from '../types'
+import type { HeartbeatFeatures, PoemResponse } from '../types'
 
-export async function requestPoem(features: AudioFeatures, durationSec: number): Promise<PoemResponse> {
+export async function requestPoem(heartbeat: HeartbeatFeatures): Promise<PoemResponse> {
   const response = await fetch('/api/poem', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      sampleName: 'Luminous Drift',
-      durationSec,
-      features,
+      session: 'bowl-meditation',
+      heartbeat,
     }),
   })
 

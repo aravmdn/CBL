@@ -3,35 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
-class FakeAudioElement extends EventTarget {
-  currentTime = 0
-  duration = 48
-  paused = true
-  preload = ''
-  crossOrigin: string | null = null
-  src: string
-  volume = 0.72
-
-  constructor(src: string) {
-    super()
-    this.src = src
-  }
-
-  load() {
-    this.dispatchEvent(new Event('loadedmetadata'))
-  }
-
-  async play() {
-    this.paused = false
-    this.dispatchEvent(new Event('play'))
-  }
-
-  pause() {
-    this.paused = true
-    this.dispatchEvent(new Event('pause'))
-  }
-}
-
 class FakeAudioContext {
   state = 'running'
   destination = {}
@@ -50,24 +21,8 @@ class FakeAudioContext {
     }
   }
 
-  createMediaElementSource() {
-    return {
-      connect: vi.fn(),
-    }
-  }
-
-  async decodeAudioData() {
-    const samples = new Float32Array(8000)
-    for (let index = 0; index < samples.length; index += 1) {
-      samples[index] = Math.sin((2 * Math.PI * 220 * index) / 8000) * 0.3
-    }
-
-    return {
-      duration: 1,
-      sampleRate: 8000,
-      numberOfChannels: 1,
-      getChannelData: () => samples,
-    }
+  createMediaStreamSource() {
+    return { connect: vi.fn() }
   }
 }
 
@@ -106,7 +61,6 @@ function installCanvasMock() {
 
 beforeEach(() => {
   writeClipboardText = vi.fn(async () => undefined)
-  vi.stubGlobal('Audio', FakeAudioElement)
   vi.stubGlobal('AudioContext', FakeAudioContext)
   vi.stubGlobal('webkitAudioContext', FakeAudioContext)
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
@@ -152,8 +106,8 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByText('CBL')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Play sample' }).length).toBeGreaterThan(0)
-    expect(screen.getByRole('slider', { name: 'Volume' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start bowl microphone' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Regenerate poem' })).toBeInTheDocument()
     expect(screen.getByText('Poem')).toBeInTheDocument()
   })
 
@@ -182,24 +136,13 @@ describe('App', () => {
     expect(screen.getByText('Poem ready')).toBeInTheDocument()
   })
 
-  it('supports sample transport controls', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(screen.getByRole('button', { name: 'Skip sample forward 10 seconds' }))
-    expect(screen.getByText('00:10')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Restart sample' }))
-    expect(screen.getAllByText('00:00').length).toBeGreaterThan(0)
-  })
-
   it('copies the current poem to the clipboard', async () => {
     const user = userEvent.setup()
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: 'Copy poem' }))
 
-    await expect(navigator.clipboard.readText()).resolves.toContain('a quiet bloom')
+    await expect(navigator.clipboard.readText()).resolves.toContain('the bowl rings')
     expect(screen.getByRole('status')).toHaveTextContent('Copied')
   })
 
