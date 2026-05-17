@@ -7,6 +7,8 @@ type CameraStageProps = {
   anchors: TrackingAnchors
   bars: number[]
   cameraStatus: CameraStatus
+  chakraColor?: string
+  heartbeatPulse?: boolean
   isPlaying: boolean
   liveEnergy: number
   personDetected: boolean
@@ -210,9 +212,76 @@ function drawAuraPoetry(
   context.restore()
 }
 
+function parseCssColor(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [
+    Number.parseInt(h.slice(0, 2), 16),
+    Number.parseInt(h.slice(2, 4), 16),
+    Number.parseInt(h.slice(4, 6), 16),
+  ]
+}
+
+function drawCymaticsPattern(
+  context: CanvasRenderingContext2D,
+  offscreen: HTMLCanvasElement,
+  bars: number[],
+  chakraColor: string,
+  cssWidth: number,
+  cssHeight: number,
+) {
+  const res = offscreen.width
+  const ctx = offscreen.getContext('2d')
+  if (!ctx || typeof ctx.createImageData !== 'function') return
+
+  // Pick top 8 bars by magnitude, use their index as the wave number k
+  const indexed = bars.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v).slice(0, 8)
+  const [cr, cg, cb] = parseCssColor(chakraColor)
+  const imageData = ctx.createImageData(res, res)
+  const data = imageData.data
+
+  // Precompute sin tables per frequency to avoid redundant calls
+  for (const { v, i } of indexed) {
+    if (v < 0.06) continue
+    const k = (i + 1) * 1.4
+    const sinX = new Float32Array(res)
+    const sinY = new Float32Array(res)
+    for (let p = 0; p < res; p += 1) {
+      const coord = (p / res) * 2 - 1
+      sinX[p] = Math.sin(k * coord)
+      sinY[p] = Math.sin(k * coord)
+    }
+    for (let row = 0; row < res; row += 1) {
+      for (let col = 0; col < res; col += 1) {
+        const px = (row * res + col) * 4
+        const contribution = Math.abs(sinX[col] * sinY[row]) * v
+        data[px] = Math.min(255, data[px] + cr * contribution)
+        data[px + 1] = Math.min(255, data[px + 1] + cg * contribution)
+        data[px + 2] = Math.min(255, data[px + 2] + cb * contribution)
+        data[px + 3] = Math.min(255, data[px + 3] + contribution * 200)
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.globalAlpha = 0.22
+  context.imageSmoothingEnabled = true
+  context.drawImage(offscreen, 0, 0, cssWidth, cssHeight)
+  context.restore()
+}
+
 export function CameraStage(props: CameraStageProps) {
-  const { anchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, poemLines, trackingStatus, videoRef } = props
+  const { anchors, bars, cameraStatus, chakraColor = '#00f5ff', heartbeatPulse = false, isPlaying, liveEnergy, personDetected, poemLines, trackingStatus, videoRef } = props
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null)
+  const lastBeatTimeRef = useRef(0)
+
+  useEffect(() => {
+    if (heartbeatPulse) {
+      lastBeatTimeRef.current = performance.now()
+    }
+  }, [heartbeatPulse])
   const auraAnchors = useMemo<AuraAnchor[]>(
     () => [
       { anchor: 'head', radius: 190, color: auraGlows[0] },
@@ -232,6 +301,13 @@ export function CameraStage(props: CameraStageProps) {
     const context = canvas.getContext('2d')
     if (!context) {
       return undefined
+    }
+
+    if (!offscreenRef.current) {
+      const offscreen = document.createElement('canvas')
+      offscreen.width = 64
+      offscreen.height = 64
+      offscreenRef.current = offscreen
     }
 
     let animationId = 0
@@ -289,9 +365,14 @@ export function CameraStage(props: CameraStageProps) {
       context.fillRect(0, 0, cssWidth, cssHeight)
 
       const effectsActive = isPlaying && personDetected
-      const energy = isPlaying ? Math.max(liveEnergy, 0.08) : 0.08
+      const baseEnergy = isPlaying ? Math.max(liveEnergy, 0.08) : 0.08
+      // Heartbeat pulse: spike on beat, exponential decay over ~300ms
+      const beatAge = time - lastBeatTimeRef.current
+      const beatBoost = Math.exp(-beatAge / 300) * 0.45
+      const energy = Math.min(1, baseEnergy + beatBoost)
 
-      if (isPlaying) {
+      if (isPlaying && offscreenRef.current) {
+        drawCymaticsPattern(context, offscreenRef.current, bars, chakraColor, cssWidth, cssHeight)
         drawAuroraCurtain(context, cssWidth, cssHeight, time, energy, reduceMotion)
       }
 
@@ -326,7 +407,7 @@ export function CameraStage(props: CameraStageProps) {
 
     animationId = window.requestAnimationFrame(render)
     return () => window.cancelAnimationFrame(animationId)
-  }, [anchors, auraAnchors, bars, cameraStatus, isPlaying, liveEnergy, personDetected, poemLines, videoRef])
+  }, [anchors, auraAnchors, bars, cameraStatus, chakraColor, isPlaying, liveEnergy, personDetected, poemLines, videoRef])
 
   return (
     <section className="stage" aria-label="Camera visual effects stage">
@@ -338,7 +419,7 @@ export function CameraStage(props: CameraStageProps) {
           {cameraStatus !== 'granted'
             ? 'Camera fallback'
             : trackingStatus === 'tracking' && isPlaying
-              ? 'Listening'
+              ? 'Session active'
               : trackingStatus === 'tracking'
                 ? 'Person detected'
                 : 'Finding person'}
