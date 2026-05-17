@@ -9,6 +9,7 @@ const fallbackFeatures: AudioFeatures = {
   mids: 0.42,
   treble: 0.24,
   pulseBpm: 84,
+  dominantChakra: null,
 }
 
 const createSilentBars = () => Array.from({ length: 40 }, () => 0.08)

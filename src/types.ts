@@ -1,3 +1,18 @@
+export type ChakraInfo = {
+  name: string
+  frequency: number
+  color: string
+}
+
+export type HeartbeatTrend = 'calming' | 'stable' | 'rising'
+
+export type HeartbeatFeatures = {
+  bpm: number
+  trend: HeartbeatTrend
+  variability: number
+  dominantChakra: ChakraInfo | null
+}
+
 export type AudioFeatures = {
   averageEnergy: number
   peakEnergy: number
@@ -5,6 +20,7 @@ export type AudioFeatures = {
   mids: number
   treble: number
   pulseBpm: number | null
+  dominantChakra: ChakraInfo | null
 }
 
 export type PoemRequest = {

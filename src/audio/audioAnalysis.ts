@@ -1,4 +1,14 @@
-import type { AudioFeatures } from '../types'
+import type { AudioFeatures, ChakraInfo } from '../types'
+
+const CHAKRAS: ReadonlyArray<ChakraInfo> = [
+  { name: 'Root',         frequency: 396, color: '#ff0000' },
+  { name: 'Sacral',       frequency: 417, color: '#ff7f00' },
+  { name: 'Solar Plexus', frequency: 528, color: '#ffff00' },
+  { name: 'Heart',        frequency: 639, color: '#00ff00' },
+  { name: 'Throat',       frequency: 741, color: '#007fff' },
+  { name: 'Third Eye',    frequency: 852, color: '#4b0082' },
+  { name: 'Crown',        frequency: 963, color: '#9400d3' },
+]
 
 export type AudioBufferLike = {
   sampleRate: number
@@ -96,16 +106,24 @@ export function analyzeSamples(channels: Float32Array[], sampleRate: number, dur
   let mids = 0
   let treble = 0
   let frames = 0
+  const chakraSums = new Array<number>(CHAKRAS.length).fill(0)
 
   for (let start = 0; start + frameSize < mixed.length && frames < maxFrames; start += step) {
     bass += bassFrequencies.reduce((sum, frequency) => sum + goertzelMagnitude(mixed, start, frameSize, sampleRate, frequency), 0)
     mids += midFrequencies.reduce((sum, frequency) => sum + goertzelMagnitude(mixed, start, frameSize, sampleRate, frequency), 0)
     treble += trebleFrequencies.reduce((sum, frequency) => sum + goertzelMagnitude(mixed, start, frameSize, sampleRate, frequency), 0)
+    for (let i = 0; i < CHAKRAS.length; i += 1) {
+      chakraSums[i] += goertzelMagnitude(mixed, start, frameSize, sampleRate, CHAKRAS[i].frequency)
+    }
     frames += 1
   }
 
   const totalBandEnergy = bass + mids + treble || 1
   const rms = Math.sqrt(sumSquares / Math.max(1, mixed.length))
+
+  const dominantChakraIdx = chakraSums.reduce((best, val, i) => (val > chakraSums[best] ? i : best), 0)
+  const { name, frequency, color } = CHAKRAS[dominantChakraIdx]
+  const dominantChakra: ChakraInfo = { name, frequency, color }
 
   return {
     averageEnergy: clamp01(rms * 2.4),
@@ -114,6 +132,7 @@ export function analyzeSamples(channels: Float32Array[], sampleRate: number, dur
     mids: clamp01(mids / totalBandEnergy),
     treble: clamp01(treble / totalBandEnergy),
     pulseBpm: estimatePulseBpm(mixed, sampleRate || Math.round(mixed.length / durationSec)),
+    dominantChakra,
   }
 }
 
