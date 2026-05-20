@@ -1,5 +1,5 @@
 import { Check, Copy, Heart, Mic, MicOff, RefreshCw } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { useHeartbeat } from './audio/useHeartbeat'
 import { useMicInput } from './audio/useMicInput'
@@ -26,6 +26,8 @@ const seedPoem: PoemResponse = {
   },
 }
 
+const INACTIVITY_HIDE_MS = 3000
+
 function App() {
   const mic = useMicInput()
   const heartbeat = useHeartbeat()
@@ -36,6 +38,29 @@ function App() {
   const [generationStatus, setGenerationStatus] = useState<'idle' | 'generating' | 'ready' | 'error'>('idle')
   const [error, setError] = useState('')
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Auto-hide controls after inactivity
+  const showControls = useCallback(() => {
+    setControlsVisible(true)
+    if (hideTimerRef.current !== null) clearTimeout(hideTimerRef.current)
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), INACTIVITY_HIDE_MS)
+  }, [])
+
+  useEffect(() => {
+    showControls()
+    const events = ['mousemove', 'mousedown', 'touchstart', 'keydown'] as const
+    for (const event of events) {
+      window.addEventListener(event, showControls, { passive: true })
+    }
+    return () => {
+      for (const event of events) {
+        window.removeEventListener(event, showControls)
+      }
+      if (hideTimerRef.current !== null) clearTimeout(hideTimerRef.current)
+    }
+  }, [showControls])
 
   // Session is active when the bowl mic is listening
   const isSessionActive = mic.isListening
@@ -106,7 +131,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <aside className="control-rail" aria-label="Controls">
+      <aside className={`control-rail${controlsVisible ? '' : ' hidden'}`} aria-label="Controls">
         <div className="brand">CBL</div>
 
         <button
@@ -145,6 +170,7 @@ function App() {
       <CameraStage
         anchors={tracking.anchors}
         bars={mic.bars}
+        bpm={heartbeat.bpm}
         cameraStatus={camera.status}
         heartbeatPulse={heartbeat.isBeating}
         isPlaying={isSessionActive}
@@ -155,7 +181,7 @@ function App() {
         videoRef={camera.videoRef}
       />
 
-      <aside className="poem-panel" aria-label="Poem">
+      <aside className={`poem-panel${controlsVisible ? '' : ' hidden'}`} aria-label="Poem">
         <header>
           <h2>Poem</h2>
           <div className="poem-actions">

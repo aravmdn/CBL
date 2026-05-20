@@ -1,6 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap');
+
 :root {
-  color: #f7f4eb;
-  background: #080d11;
+  --aura-calm:       #9B59B6;
+  --aura-relax:      #32C4E3;
+  --aura-neutral:    #FFB347;
+  --aura-active:     #FF6B35;
+  --scrim-bg:        rgba(5, 5, 20, 0.42);
+  --text-warm-white: #FFF8F0;
+  --poem-glow:       rgba(177, 121, 210, 0.85);
+  --ease-gentle:     cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-exhale:     cubic-bezier(0.16, 1, 0.3, 1);
+  --font-poem:       'Cormorant Garamond', Georgia, serif;
+
+  color: #FFF8F0;
+  background: #06060C;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -14,8 +27,9 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
+  background: #06060C;
 }
 
 button,
@@ -31,23 +45,33 @@ button {
   display: grid;
   grid-template-columns: 126px minmax(0, 1fr) 236px;
   align-items: center;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.08), transparent 28%),
-    #050506;
+  min-height: 100dvh;
+  background: #06060C;
 }
 
+/* ── Controls auto-hide ───────────────────────────────────── */
 .control-rail,
 .poem-panel {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.42);
-  color: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(22px) saturate(120%);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(177, 121, 210, 0.3);
+  background: var(--scrim-bg);
+  color: var(--text-warm-white);
+  backdrop-filter: blur(8px) saturate(120%);
+  box-shadow:
+    0 0 0 1px rgba(177, 121, 210, 0.08) inset,
+    0 20px 70px rgba(0, 0, 0, 0.48);
+  font-family: var(--font-poem);
+  opacity: 1;
+  transition: opacity 1200ms var(--ease-gentle);
+}
+
+.control-rail.hidden,
+.poem-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .control-rail {
@@ -71,16 +95,18 @@ button {
 
 .brand {
   padding: 2px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-poem);
   font-size: 19px;
+  font-weight: 400;
   line-height: 1;
   text-align: center;
-  letter-spacing: 0;
+  letter-spacing: 0.06em;
+  color: var(--text-warm-white);
 }
 
 .rail-section {
   padding: 28px 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(177, 121, 210, 0.14);
 }
 
 .rail-section h2,
@@ -90,9 +116,10 @@ button {
   gap: 12px;
   margin: 0 0 18px;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 400;
+  font-family: var(--font-poem);
   line-height: 1.2;
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
 }
 
 .select-button,
@@ -103,17 +130,17 @@ button {
   width: 100%;
   min-height: 42px;
   padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.88);
+  background: var(--scrim-bg);
+  color: var(--text-warm-white);
 }
 
 .generate-button {
   justify-content: center;
   gap: 10px;
-  border-color: rgba(142, 232, 255, 0.34);
-  background: rgba(142, 232, 255, 0.08);
+  border-color: rgba(50, 196, 227, 0.34);
+  background: rgba(50, 196, 227, 0.06);
 }
 
 .static-control {
@@ -129,18 +156,18 @@ button {
   width: 38px;
   height: 38px;
   place-items: center;
-  border: 0;
+  border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.84);
+  background: var(--scrim-bg);
+  color: var(--text-warm-white);
   cursor: pointer;
   transition:
-    background-color 180ms ease,
-    color 180ms ease;
+    background-color 180ms var(--ease-gentle),
+    color 180ms var(--ease-gentle);
 }
 
 .poem-actions button:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(177, 121, 210, 0.18);
   color: #fff;
 }
 
@@ -150,12 +177,12 @@ button {
   justify-content: center;
   gap: 5px;
   padding: 6px 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 248, 240, 0.82);
   transition: color 80ms ease;
 }
 
 .heartbeat-display.beat {
-  color: #ff4fd8;
+  color: var(--aura-calm);
 }
 
 .heartbeat-display svg {
@@ -169,18 +196,20 @@ button {
 
 .bpm-value {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.5px;
   line-height: 1;
+  font-family: var(--font-poem);
 }
 
 .trend-label {
   margin: 0;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 248, 240, 0.42);
   font-size: 10px;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  font-family: var(--font-poem);
 }
 
 .generate-poem-button {
@@ -188,19 +217,19 @@ button {
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(142, 232, 255, 0.34);
+  border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 50%;
-  background: rgba(142, 232, 255, 0.08);
-  color: rgba(255, 255, 255, 0.84);
+  background: var(--scrim-bg);
+  color: var(--text-warm-white);
   cursor: pointer;
   transition:
-    background-color 180ms ease,
-    color 180ms ease;
+    background-color 180ms var(--ease-gentle),
+    box-shadow 180ms var(--ease-gentle);
 }
 
 .generate-poem-button:hover {
-  background: rgba(142, 232, 255, 0.18);
-  color: #fff;
+  background: rgba(177, 121, 210, 0.16);
+  box-shadow: 0 0 16px rgba(177, 121, 210, 0.35);
 }
 
 .generate-poem-button:disabled {
@@ -213,32 +242,33 @@ button {
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 248, 240, 0.55);
   transition: color 0.2s, border-color 0.2s, background 0.2s;
   width: 100%;
 }
 
 .mic-button:hover {
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text-warm-white);
+  border-color: rgba(177, 121, 210, 0.6);
 }
 
 .mic-button.active {
-  color: #ff4fd8;
-  border-color: #ff4fd8;
-  background: rgba(255, 79, 216, 0.1);
+  color: var(--aura-calm);
+  border-color: var(--aura-calm);
+  background: rgba(155, 89, 182, 0.12);
 }
 
 .micro-label {
   margin: 0;
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(255, 248, 240, 0.58);
   font-size: 11px;
   line-height: 1.25;
   text-align: center;
+  font-family: var(--font-poem);
 }
 
 .mini-bars {
@@ -251,15 +281,16 @@ button {
 .mini-bars span {
   width: 5px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #d2beff, #8ee8ff);
+  background: linear-gradient(180deg, var(--aura-calm), var(--aura-relax));
 }
 
 .tip {
   margin: auto 22px 24px;
-  color: rgba(247, 244, 235, 0.66);
+  color: rgba(255, 248, 240, 0.66);
   font-size: 13px;
   font-style: italic;
   line-height: 1.45;
+  font-family: var(--font-poem);
 }
 
 .rail-icons {
@@ -271,7 +302,7 @@ button {
 .stage {
   position: relative;
   min-width: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -286,7 +317,7 @@ button {
 .effects-canvas {
   display: block;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
 }
 
 .stage::after {
@@ -295,7 +326,7 @@ button {
   pointer-events: none;
   content: "";
   background:
-    linear-gradient(90deg, rgba(7, 11, 14, 0.55), transparent 18%, transparent 74%, rgba(7, 11, 14, 0.44)),
+    linear-gradient(90deg, rgba(6, 6, 12, 0.55), transparent 18%, transparent 74%, rgba(6, 6, 12, 0.44)),
     radial-gradient(circle at 52% 46%, transparent 0, transparent 38%, rgba(0, 0, 0, 0.24) 100%);
 }
 
@@ -306,12 +337,13 @@ button {
   justify-content: center;
   gap: 10px;
   min-height: 52px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  color: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+  background: var(--scrim-bg);
+  color: var(--text-warm-white);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(177, 121, 210, 0.12);
+  font-family: var(--font-poem);
 }
 
 .stage-status {
@@ -327,12 +359,14 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.8);
+  background: rgba(255, 248, 240, 0.7);
+  box-shadow: 0 0 14px rgba(177, 121, 210, 0.6);
   opacity: 0.7;
 }
 
 .status-dot.active {
+  background: var(--aura-calm);
+  box-shadow: 0 0 14px rgba(155, 89, 182, 0.9);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -342,7 +376,7 @@ button {
 
 .poem-panel header h2 {
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(177, 121, 210, 0.2);
   font-size: 15px;
 }
 
@@ -355,29 +389,30 @@ button {
 .poem-actions button {
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(177, 121, 210, 0.3);
+  background: var(--scrim-bg);
 }
 
 .error-message {
   margin: 0 18px 12px;
   padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(177, 121, 210, 0.28);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: rgba(155, 89, 182, 0.08);
+  color: var(--text-warm-white);
   font-size: 12px;
   line-height: 1.4;
 }
 
 .copy-status {
   margin: 0 18px 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 248, 240, 0.72);
   font-size: 12px;
+  font-family: var(--font-poem);
 }
 
 .copy-status.error {
-  color: #fff;
+  color: var(--text-warm-white);
 }
 
 .poem-lines {
@@ -406,7 +441,7 @@ button {
   left: 3px;
   width: 1px;
   content: "";
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(177, 121, 210, 0.2);
 }
 
 .poem-lines li:last-child::before {
@@ -418,19 +453,22 @@ button {
   height: 6px;
   margin-top: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 248, 240, 0.55);
 }
 
 .poem-lines li:first-child .timeline-dot {
-  background: #fff;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
+  background: var(--aura-calm);
+  box-shadow: 0 0 10px rgba(155, 89, 182, 0.8);
 }
 
 .poem-lines p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 248, 240, 0.84);
   font-size: 13px;
-  line-height: 1.35;
+  font-family: var(--font-poem);
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
 }
 
 .listening-pill {
@@ -485,8 +523,8 @@ button {
 
   .stage,
   .effects-canvas {
-    min-height: 100vh;
-    height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
   }
 
   .poem-panel {
