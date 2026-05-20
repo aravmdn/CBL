@@ -30,6 +30,7 @@ export function validateAudioFeatures(value: unknown): AudioFeatures {
     mids: clamp01(readNumber(input.mids, 'features.mids')),
     treble: clamp01(readNumber(input.treble, 'features.treble')),
     pulseBpm: pulseBpm === undefined ? null : pulseBpm,
+    dominantChakra: null,
   }
 }
 

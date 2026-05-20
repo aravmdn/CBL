@@ -15,6 +15,7 @@ const validRequest = {
     mids: 0.5,
     treble: 0.2,
     pulseBpm: 84,
+    dominantChakra: null,
   },
 }
 
