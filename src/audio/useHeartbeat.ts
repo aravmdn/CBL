@@ -26,23 +26,12 @@ export function useHeartbeat(): HeartbeatState {
 
   const baseBpmRef = useRef(70 + Math.random() * 6)
   const bpmHistoryRef = useRef<number[]>([])
-  const energyRef = useRef(0.1)
   const startTimeRef = useRef(Date.now())
 
   useEffect(() => {
     let beatTimeout: ReturnType<typeof setTimeout> | null = null
     let flashTimeout: ReturnType<typeof setTimeout> | null = null
-    let energyFrame: number | null = null
     let cancelled = false
-
-    function decayEnergy() {
-      if (cancelled) return
-      energyRef.current = Math.max(0.08, energyRef.current * 0.94)
-      setState((prev) => ({ ...prev, energy: energyRef.current }))
-      if (energyRef.current > 0.1) {
-        energyFrame = window.requestAnimationFrame(decayEnergy)
-      }
-    }
 
     function beat() {
       if (cancelled) return
@@ -79,16 +68,14 @@ export function useHeartbeat(): HeartbeatState {
       const variance = recentBpms.reduce((a, b) => a + (b - mean) ** 2, 0) / recentBpms.length
       const variability = Math.min(1, Math.sqrt(variance) / 6)
 
-      energyRef.current = 1.0
-      if (energyFrame !== null) window.cancelAnimationFrame(energyFrame)
-
+      // Coarse energy step only — the canvas derives its own smooth per-frame
+      // envelope from the beat pulse, so we avoid a 60fps setState here.
       setState({ bpm: currentBpm, isBeating: true, energy: 1.0, trend, variability, mode: 'simulated' })
 
       flashTimeout = setTimeout(() => {
-        if (!cancelled) setState((prev) => ({ ...prev, isBeating: false }))
+        if (!cancelled) setState((prev) => ({ ...prev, isBeating: false, energy: 0.55 }))
       }, BEAT_FLASH_MS)
 
-      energyFrame = window.requestAnimationFrame(decayEnergy)
       beatTimeout = setTimeout(beat, nextInterval)
     }
 
@@ -98,7 +85,6 @@ export function useHeartbeat(): HeartbeatState {
       cancelled = true
       if (beatTimeout !== null) clearTimeout(beatTimeout)
       if (flashTimeout !== null) clearTimeout(flashTimeout)
-      if (energyFrame !== null) window.cancelAnimationFrame(energyFrame)
     }
   }, [])
 

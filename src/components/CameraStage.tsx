@@ -44,6 +44,8 @@ const DEFAULT_CHAKRA = { line: '#C8933A', glow: '#E8B855', fill: 'rgba(200,147,5
 const ATTACK_MS = 80
 const DECAY_MS = 400
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
 function getBeatOpacity(beatAgeMs: number): number {
   if (beatAgeMs < ATTACK_MS) {
     return (beatAgeMs / ATTACK_MS) * 0.75
@@ -59,7 +61,56 @@ function getBpmColor(bpm: number): string {
   return '#9B59B6'                  // meditative — violet
 }
 
-const getAnchorPoint = (anchors: TrackingAnchors, name: AuraAnchor['anchor'], width: number, height: number) => {
+// One Euro filter — adaptive low-pass that kills jitter when still and lag when
+// moving. Smooths jittery pose landmarks so the aura glides instead of snapping.
+class OneEuroFilter {
+  private xPrev: number | null = null
+  private dxPrev = 0
+  private tPrev = 0
+  private minCutoff: number
+  private beta: number
+  private dCutoff: number
+
+  constructor(minCutoff = 1.1, beta = 0.018, dCutoff = 1) {
+    this.minCutoff = minCutoff
+    this.beta = beta
+    this.dCutoff = dCutoff
+  }
+
+  private alpha(cutoff: number, dt: number) {
+    const tau = 1 / (2 * Math.PI * cutoff)
+    return 1 / (1 + tau / dt)
+  }
+
+  reset() {
+    this.xPrev = null
+    this.dxPrev = 0
+  }
+
+  filter(x: number, tSec: number): number {
+    if (this.xPrev === null) {
+      this.xPrev = x
+      this.tPrev = tSec
+      return x
+    }
+    const dt = Math.max(1 / 120, tSec - this.tPrev)
+    const dx = (x - this.xPrev) / dt
+    const aD = this.alpha(this.dCutoff, dt)
+    const dxHat = aD * dx + (1 - aD) * this.dxPrev
+    const cutoff = this.minCutoff + this.beta * Math.abs(dxHat)
+    const a = this.alpha(cutoff, dt)
+    const xHat = a * x + (1 - a) * this.xPrev
+    this.xPrev = xHat
+    this.dxPrev = dxHat
+    this.tPrev = tSec
+    return xHat
+  }
+}
+
+type AnchorFilter = { x: OneEuroFilter; y: OneEuroFilter }
+const ANCHOR_NAMES: Array<keyof TrackingAnchors> = ['head', 'leftShoulder', 'rightShoulder', 'torso']
+
+const getAnchorPoint = (anchors: TrackingAnchors, name: keyof TrackingAnchors, width: number, height: number) => {
   const anchor = anchors[name] ?? anchors.torso ?? anchors.head
   return {
     x: (anchor?.x ?? 0.5) * width,
@@ -75,8 +126,16 @@ const colorWithAlpha = (color: string, alpha: number) => {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
 }
 
+function parseCssColor(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [
+    Number.parseInt(h.slice(0, 2), 16),
+    Number.parseInt(h.slice(2, 4), 16),
+    Number.parseInt(h.slice(4, 6), 16),
+  ]
+}
+
 function drawFallbackFigure(context: CanvasRenderingContext2D, width: number, height: number) {
-  // Dark void background
   context.fillStyle = '#06060C'
   context.fillRect(0, 0, width, height)
 
@@ -106,13 +165,12 @@ function drawAuroraCurtain(
   reduceMotion: boolean,
 ) {
   const motion = reduceMotion ? 0 : time * 0.00042
-  const intensity = 0.3 + energy * 0.7
+  const intensity = 0.4 + energy * 0.85
 
   context.save()
-  context.globalCompositeOperation = 'source-over'
-  context.filter = `blur(${12 + energy * 14}px)`
+  // Additive blending gives soft, luminous ribbons without a per-frame blur pass.
+  context.globalCompositeOperation = 'screen'
 
-  // Beat-peak tint: shift toward violet on strong pulse
   const beatTint = Math.min(1, beatOpacity / 0.75)
   const ribbonColors = [
     beatTint > 0.5 ? '#B53DFF' : '#2BE6C8',
@@ -122,16 +180,16 @@ function drawAuroraCurtain(
   ]
 
   for (let ribbon = 0; ribbon < 4; ribbon += 1) {
-    const baseY = height * (0.18 + ribbon * 0.16)
-    const amplitude = height * (0.09 + energy * 0.1 + ribbon * 0.012)
-    const depth = height * (0.12 + ribbon * 0.035)
+    const baseY = height * (0.16 + ribbon * 0.17)
+    const amplitude = height * (0.1 + energy * 0.12 + ribbon * 0.012)
+    const depth = height * (0.14 + ribbon * 0.04)
     const phase = motion * (1 + ribbon * 0.22) + ribbon * 1.7
     const gradient = context.createLinearGradient(width * 0.08, baseY - depth, width * 0.94, baseY + depth)
 
     gradient.addColorStop(0, colorWithAlpha(ribbonColors[ribbon % ribbonColors.length], 0))
-    gradient.addColorStop(0.16, colorWithAlpha(ribbonColors[ribbon % ribbonColors.length], 0.16 * intensity))
-    gradient.addColorStop(0.44, colorWithAlpha(auroraPalette[(ribbon + 1) % auroraPalette.length], 0.32 * intensity))
-    gradient.addColorStop(0.72, colorWithAlpha(auroraPalette[(ribbon + 2) % auroraPalette.length], 0.24 * intensity))
+    gradient.addColorStop(0.16, colorWithAlpha(ribbonColors[ribbon % ribbonColors.length], 0.2 * intensity))
+    gradient.addColorStop(0.44, colorWithAlpha(auroraPalette[(ribbon + 1) % auroraPalette.length], 0.4 * intensity))
+    gradient.addColorStop(0.72, colorWithAlpha(auroraPalette[(ribbon + 2) % auroraPalette.length], 0.3 * intensity))
     gradient.addColorStop(1, colorWithAlpha(auroraPalette[(ribbon + 3) % auroraPalette.length], 0))
 
     context.fillStyle = gradient
@@ -166,164 +224,136 @@ function drawAuroraCurtain(
     context.fill()
   }
 
-  context.filter = 'none'
   context.restore()
 }
 
 function drawBodyAura(
   context: CanvasRenderingContext2D,
-  anchors: TrackingAnchors,
+  getPoint: (name: keyof TrackingAnchors) => { x: number; y: number },
   width: number,
   height: number,
   time: number,
   energy: number,
   bpmColor: string,
+  beatOpacity: number,
+  presence: number,
   reduceMotion: boolean,
   auraAnchors: AuraAnchor[],
 ) {
   const motion = reduceMotion ? 0 : time * 0.001
+  const torso = getPoint('torso')
 
+  // Ambient halo behind the body — broad, soft, BPM-tinted.
   context.save()
-  context.globalCompositeOperation = 'source-over'
+  context.globalCompositeOperation = 'screen'
+  const [br, bg, bb] = parseCssColor(bpmColor)
+  const haloR = Math.max(width, height) * (0.32 + energy * 0.14)
+  const halo = context.createRadialGradient(torso.x, torso.y, 12, torso.x, torso.y, haloR)
+  halo.addColorStop(0, `rgba(${br}, ${bg}, ${bb}, ${(0.1 + energy * 0.12) * presence})`)
+  halo.addColorStop(0.4, `rgba(43, 230, 200, ${(0.07 + energy * 0.07) * presence})`)
+  halo.addColorStop(0.72, `rgba(181, 61, 255, ${(0.06 + energy * 0.07) * presence})`)
+  halo.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  context.fillStyle = halo
+  context.fillRect(0, 0, width, height)
+  context.restore()
 
+  // Per-anchor glows, additively blended so overlaps intensify into one vibrant body aura.
+  context.save()
+  context.globalCompositeOperation = 'lighter'
   auraAnchors.forEach((aura, index) => {
-    // Use BPM color for the aura, blending with the anchor's default color
-    const effectiveColor = index === 0 ? bpmColor : aura.color
-    const point = getAnchorPoint(anchors, aura.anchor, width, height)
-    const driftX = Math.sin(motion * (0.72 + index * 0.08) + index) * (12 + energy * 20)
-    const driftY = Math.cos(motion * (0.64 + index * 0.1) + index * 1.4) * (10 + energy * 16)
-    const radius = aura.radius * (1.1 + energy * 1.55)
-    const glow = context.createRadialGradient(point.x + driftX, point.y + driftY, radius * 0.08, point.x, point.y, radius)
+    const color = index === 0 ? bpmColor : aura.color
+    const point = getPoint(aura.anchor)
+    const breathe = reduceMotion ? 1 : 1 + Math.sin(motion * 1.1 + index * 0.7) * 0.09
+    const beat = 1 + beatOpacity * 0.55
+    const radius = aura.radius * (0.72 + energy * 0.95) * breathe * beat
+    const driftX = reduceMotion ? 0 : Math.sin(motion * (0.72 + index * 0.08) + index) * (8 + energy * 18)
+    const driftY = reduceMotion ? 0 : Math.cos(motion * (0.64 + index * 0.1) + index * 1.4) * (6 + energy * 14)
+    const cx = point.x + driftX
+    const cy = point.y + driftY
+    const glow = context.createRadialGradient(cx, cy, radius * 0.05, cx, cy, radius)
 
-    glow.addColorStop(0, colorWithAlpha(effectiveColor, 0.18 + energy * 0.1))
-    glow.addColorStop(0.34, colorWithAlpha(effectiveColor, 0.12 + energy * 0.08))
-    glow.addColorStop(0.72, colorWithAlpha(effectiveColor, 0.03))
+    glow.addColorStop(0, colorWithAlpha(color, (0.18 + energy * 0.16) * presence))
+    glow.addColorStop(0.34, colorWithAlpha(color, (0.11 + energy * 0.1) * presence))
+    glow.addColorStop(0.7, colorWithAlpha(color, 0.03 * presence))
     glow.addColorStop(1, 'rgba(0, 0, 0, 0)')
 
     context.fillStyle = glow
     context.beginPath()
-    context.ellipse(point.x, point.y, radius * (1.05 + index * 0.12), radius * (0.62 + index * 0.08), Math.sin(motion + index) * 0.38, 0, Math.PI * 2)
+    context.ellipse(cx, cy, radius * (1.05 + index * 0.12), radius * (0.66 + index * 0.07), Math.sin(motion + index) * 0.34, 0, Math.PI * 2)
     context.fill()
   })
-
-  const torso = getAnchorPoint(anchors, 'torso', width, height)
-  const halo = context.createRadialGradient(torso.x, torso.y, 20, torso.x, torso.y, Math.max(width, height) * (0.42 + energy * 0.08))
-
-  // Use BPM-driven color for the halo core
-  const [bR, bG, bB] = parseCssColor(bpmColor)
-  halo.addColorStop(0, `rgba(${bR}, ${bG}, ${bB}, ${0.06 + energy * 0.06})`)
-  halo.addColorStop(0.26, `rgba(43, 230, 200, ${0.1 + energy * 0.08})`)
-  halo.addColorStop(0.54, `rgba(181, 61, 255, ${0.08 + energy * 0.08})`)
-  halo.addColorStop(1, 'rgba(0, 0, 0, 0)')
-  context.fillStyle = halo
-  context.fillRect(0, 0, width, height)
-
   context.restore()
 }
 
-function drawAuraPoetry(
+function drawFloatingPoem(
   context: CanvasRenderingContext2D,
-  _anchors: TrackingAnchors,
-  poemLines: string[],
+  lines: string[],
+  center: { x: number; y: number },
+  bodyHalfWidth: number,
   width: number,
   height: number,
   time: number,
-  energy: number,
+  presence: number,
   reduceMotion: boolean,
 ) {
-  if (poemLines.length === 0) {
+  if (lines.length === 0) {
     return
   }
 
-  const motion = reduceMotion ? 0 : time * 0.00055
-
-  // Font size: clamp between 18 and 28 px, scaling with canvas width
-  const fontSize = Math.max(18, Math.min(28, width * 0.022))
-  const lineHeight = fontSize * 1.8
-  const maxWidth = width * 0.45
-  const visibleLines = poemLines.slice(0, 7)
+  const visibleLines = lines.slice(0, 7)
+  const fontSize = clamp(width * 0.02, 17, 26)
+  const lineGap = fontSize * 2.5
+  const motion = reduceMotion ? 0 : time * 0.001
+  const sideGap = bodyHalfWidth + fontSize * 1.8
+  const total = visibleLines.length
+  const spread = Math.min(height * 0.6, total * lineGap)
 
   context.save()
   context.font = `300 ${fontSize}px 'Cormorant Garamond', Georgia, serif`
   context.textBaseline = 'middle'
-  context.textAlign = 'center'
-
-  // Try to set letter-spacing (supported in modern browsers)
   if ('letterSpacing' in context) {
-    (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '0.08em'
+    (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '0.06em'
   }
+  context.globalCompositeOperation = 'screen'
 
-  // Measure total block height and position vertically centered
-  const totalHeight = visibleLines.length * lineHeight
-  const cx = width * 0.5
-  // Offset the block slightly upward from center
-  const blockTop = Math.max(40, height * 0.5 - totalHeight * 0.5 - 20)
-  const pad = 24
-  const blockX = cx - maxWidth / 2
-  const blockY = blockTop - pad
-  const blockW = maxWidth + pad * 2
-  const blockH = totalHeight + pad * 2
-
-  // Scrim behind text
-  context.save()
-  context.globalCompositeOperation = 'source-over'
-  context.fillStyle = 'rgba(5, 5, 20, 0.42)'
-  if (context.roundRect) {
-    context.beginPath()
-    context.roundRect(blockX, blockY, blockW, blockH, 16)
-    context.fill()
-  } else {
-    context.fillRect(blockX, blockY, blockW, blockH)
-  }
-  context.restore()
-
-  // Draw each line with glow stack
   visibleLines.forEach((line, index) => {
-    const x = cx + Math.sin(motion * (0.4 + index * 0.06) + index) * (reduceMotion ? 0 : energy * 6)
-    const y = blockTop + index * lineHeight + lineHeight / 2
+    // Float lines on alternating sides of the body so they orbit the aura
+    // without crossing the face.
+    const side = index % 2 === 0 ? -1 : 1
+    const t = total > 1 ? index / (total - 1) : 0.5
+    const baseY = center.y + (t - 0.5) * spread
+    const driftX = reduceMotion ? 0 : Math.sin(motion * 0.7 + index * 0.9) * 11
+    const driftY = reduceMotion ? 0 : Math.cos(motion * 0.55 + index * 1.1) * 7
+    const x = clamp(center.x + side * sideGap + driftX, fontSize * 2, width - fontSize * 2)
+    const y = clamp(baseY + driftY, fontSize, height - fontSize)
+    const breath = reduceMotion ? 1 : 0.78 + 0.22 * Math.sin(motion * 0.6 + index * 0.8)
+    const alpha = presence * breath
 
-    // Outer glow
-    context.globalCompositeOperation = 'screen'
-    context.shadowBlur = 40
-    context.shadowColor = 'rgba(177,121,210,0.9)'
-    context.fillStyle = '#F0EDE8'
-    context.fillText(line, x, y, maxWidth)
+    context.textAlign = side < 0 ? 'right' : 'left'
 
-    // Mid glow
-    context.shadowBlur = 15
-    context.shadowColor = 'rgba(177,121,210,0.7)'
-    context.fillText(line, x, y, maxWidth)
+    // Soft violet bloom
+    context.shadowColor = `rgba(181, 123, 214, ${0.85 * presence})`
+    context.shadowBlur = 22
+    context.fillStyle = `rgba(244, 240, 250, ${0.5 * alpha})`
+    context.fillText(line, x, y)
 
-    // Crisp layer
-    context.shadowBlur = 4
-    context.shadowColor = 'rgba(255,255,255,0.9)'
-    context.fillStyle = '#F0EDE8'
-    context.fillText(line, x, y, maxWidth)
+    // Crisp warm-white core
+    context.shadowColor = `rgba(255, 255, 255, ${0.85 * presence})`
+    context.shadowBlur = 6
+    context.fillStyle = `rgba(248, 245, 255, ${0.95 * alpha})`
+    context.fillText(line, x, y)
   })
 
   context.shadowBlur = 0
   context.restore()
 }
 
-function parseCssColor(hex: string): [number, number, number] {
-  const h = hex.replace('#', '')
-  return [
-    Number.parseInt(h.slice(0, 2), 16),
-    Number.parseInt(h.slice(2, 4), 16),
-    Number.parseInt(h.slice(4, 6), 16),
-  ]
-}
-
 function getChakraColors(chakraColor: string): { line: string; glow: string; fill: string } {
-  // Try to match by frequency suffix (e.g. the prop might be '#396hz' or '396' or a hex)
-  // The chakraColor prop is expected to be a hex color — look up by matching palette keys
-  // against known hex colors, or fall back to default
   for (const [freq, colors] of Object.entries(CHAKRA_COLORS)) {
     if (chakraColor === freq || chakraColor === colors.line) {
       return colors
     }
   }
-  // If it's a raw hex, use it directly as the line color with a derived glow
   if (/^#[0-9a-fA-F]{6}$/.test(chakraColor)) {
     return { line: chakraColor, glow: chakraColor, fill: `${chakraColor}14` }
   }
@@ -345,12 +375,10 @@ function drawCymaticsPattern(
   const chakraColors = getChakraColors(chakraColor)
   const [cr, cg, cb] = parseCssColor(chakraColors.line)
 
-  // Pick top 8 bars by magnitude, use their index as the wave number k
   const indexed = bars.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v).slice(0, 8)
   const imageData = ctx.createImageData(res, res)
   const data = imageData.data
 
-  // Precompute sin tables per frequency to avoid redundant calls
   for (const { v, i } of indexed) {
     if (v < 0.06) continue
     const k = (i + 1) * 1.4
@@ -375,30 +403,26 @@ function drawCymaticsPattern(
 
   ctx.putImageData(imageData, 0, 0)
 
-  // First pass: glow
   context.save()
   context.globalCompositeOperation = 'screen'
-  context.globalAlpha = 0.18
-  context.shadowBlur = 6
-  context.shadowColor = chakraColors.glow
-  context.imageSmoothingEnabled = true
-  context.drawImage(offscreen, 0, 0, cssWidth, cssHeight)
-  context.restore()
-
-  // Second pass: clean (sharper)
-  context.save()
-  context.globalCompositeOperation = 'screen'
-  context.globalAlpha = 0.18
+  context.globalAlpha = 0.2
   context.imageSmoothingEnabled = true
   context.drawImage(offscreen, 0, 0, cssWidth, cssHeight)
   context.restore()
 }
 
 export function CameraStage(props: CameraStageProps) {
-  const { anchors, bars, bpm = 70, cameraStatus, chakraColor = '#C8933A', heartbeatPulse = false, isPlaying, liveEnergy, personDetected, poemLines, trackingStatus, videoRef } = props
+  const { cameraStatus, isPlaying, personDetected, trackingStatus, heartbeatPulse, videoRef } = props
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const lastBeatTimeRef = useRef(0)
+
+  // Latest-ref pattern: the rAF loop reads volatile props from this ref so it
+  // never re-subscribes when anchors / bars / energy change every frame.
+  const propsRef = useRef(props)
+  useEffect(() => {
+    propsRef.current = props
+  })
 
   useEffect(() => {
     if (heartbeatPulse) {
@@ -408,10 +432,10 @@ export function CameraStage(props: CameraStageProps) {
 
   const auraAnchors = useMemo<AuraAnchor[]>(
     () => [
-      { anchor: 'head', radius: 190, color: auraGlows[0] },
-      { anchor: 'leftShoulder', radius: 230, color: auraGlows[1] },
-      { anchor: 'rightShoulder', radius: 230, color: auraGlows[2] },
-      { anchor: 'torso', radius: 330, color: auraGlows[3] },
+      { anchor: 'head', radius: 200, color: auraGlows[0] },
+      { anchor: 'leftShoulder', radius: 240, color: auraGlows[1] },
+      { anchor: 'rightShoulder', radius: 240, color: auraGlows[2] },
+      { anchor: 'torso', radius: 350, color: auraGlows[3] },
     ],
     [],
   )
@@ -435,12 +459,37 @@ export function CameraStage(props: CameraStageProps) {
     }
 
     let animationId = 0
+    let mounted = true
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
+    // Smoothed scene state, advanced inside the loop only (never via React setState).
+    let energy = 0.06
+    let presence = 0
+    const anchorFilters: Record<string, AnchorFilter> = {}
+    for (const name of ANCHOR_NAMES) {
+      anchorFilters[name] = { x: new OneEuroFilter(), y: new OneEuroFilter() }
+    }
+
     const render = (time: number) => {
+      if (!mounted) return
+
+      const {
+        anchors,
+        bars,
+        bpm = 70,
+        cameraStatus,
+        chakraColor = '#C8933A',
+        isPlaying,
+        liveEnergy,
+        personDetected,
+        poemLines,
+        videoRef,
+      } = propsRef.current
+
+      const dpr = window.devicePixelRatio || 1
       const rect = canvas.getBoundingClientRect()
-      const width = Math.max(1, Math.round(rect.width * window.devicePixelRatio))
-      const height = Math.max(1, Math.round(rect.height * window.devicePixelRatio))
+      const width = Math.max(1, Math.round(rect.width * dpr))
+      const height = Math.max(1, Math.round(rect.height * dpr))
 
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width
@@ -448,9 +497,10 @@ export function CameraStage(props: CameraStageProps) {
       }
 
       context.save()
-      context.scale(window.devicePixelRatio, window.devicePixelRatio)
-      const cssWidth = width / window.devicePixelRatio
-      const cssHeight = height / window.devicePixelRatio
+      context.scale(dpr, dpr)
+      const cssWidth = width / dpr
+      const cssHeight = height / dpr
+      const tSec = time / 1000
 
       // Deep void background
       context.fillStyle = '#06060C'
@@ -503,15 +553,18 @@ export function CameraStage(props: CameraStageProps) {
       context.fillRect(0, 0, cssWidth, cssHeight)
 
       const effectsActive = isPlaying && personDetected
-      const baseEnergy = isPlaying ? Math.max(liveEnergy, 0.08) : 0.08
 
-      // Two-phase attack/decay beat pulse
+      // Smoothly advance presence (aura/poem fade) and energy envelope — no React renders.
+      presence += ((effectsActive ? 1 : 0) - presence) * 0.08
+
       const beatAge = time - lastBeatTimeRef.current
       const beatOpacity = getBeatOpacity(beatAge)
-      const beatBoost = beatOpacity * 0.6
-      const energy = Math.min(1, baseEnergy + beatBoost)
+      const micEnergy = bars.length ? bars.reduce((sum, value) => sum + value, 0) / bars.length : 0
+      const energyTarget = isPlaying
+        ? clamp(0.12 + micEnergy * 0.6 + beatOpacity * 0.6 + liveEnergy * 0.15, 0, 1)
+        : 0.06
+      energy += (energyTarget - energy) * 0.12
 
-      // BPM-driven aura color
       const bpmColor = getBpmColor(bpm)
 
       if (isPlaying && offscreenRef.current) {
@@ -519,28 +572,54 @@ export function CameraStage(props: CameraStageProps) {
         drawAuroraCurtain(context, cssWidth, cssHeight, time, energy, beatOpacity, reduceMotion)
       }
 
-      if (effectsActive) {
-        drawBodyAura(context, anchors, cssWidth, cssHeight, time, energy, bpmColor, reduceMotion, auraAnchors)
-        drawAuraPoetry(context, anchors, poemLines, cssWidth, cssHeight, time, energy, reduceMotion)
+      // Smooth the jittery pose anchors with One Euro before they drive any drawing.
+      const smoothed: TrackingAnchors = {}
+      for (const name of ANCHOR_NAMES) {
+        const raw = anchors[name]
+        const filter = anchorFilters[name]
+        if (raw) {
+          smoothed[name] = {
+            x: filter.x.filter(raw.x, tSec),
+            y: filter.y.filter(raw.y, tSec),
+            confidence: raw.confidence,
+          }
+        } else {
+          filter.x.reset()
+          filter.y.reset()
+        }
+      }
+      const getPoint = (name: keyof TrackingAnchors) => getAnchorPoint(smoothed, name, cssWidth, cssHeight)
+
+      if (presence > 0.01) {
+        drawBodyAura(context, getPoint, cssWidth, cssHeight, time, energy, bpmColor, beatOpacity, presence, reduceMotion, auraAnchors)
+
+        const head = getPoint('head')
+        const torso = getPoint('torso')
+        const poemCenter = { x: torso.x, y: (head.y + torso.y) / 2 }
+        const leftShoulder = smoothed.leftShoulder
+        const rightShoulder = smoothed.rightShoulder
+        const bodyHalfWidth =
+          leftShoulder && rightShoulder
+            ? (Math.abs(leftShoulder.x - rightShoulder.x) * cssWidth) / 2 + 46
+            : cssWidth * 0.13
+        drawFloatingPoem(context, poemLines, poemCenter, bodyHalfWidth, cssWidth, cssHeight, time, presence, reduceMotion)
 
         const waveBase = cssHeight - 42
         const waveStart = cssWidth * 0.18
         const waveWidth = cssWidth * 0.64
         context.save()
         context.globalCompositeOperation = 'screen'
-        context.filter = 'blur(10px)'
         bars.forEach((bar, index) => {
           const x = waveStart + (index / Math.max(1, bars.length - 1)) * waveWidth
           const barHeight = 8 + bar * 46
           const gradient = context.createRadialGradient(x, waveBase, 2, x, waveBase, barHeight * 1.8)
-          gradient.addColorStop(0, colorWithAlpha(auroraPalette[index % auroraPalette.length], 0.32 + bar * 0.22))
+          gradient.addColorStop(0, colorWithAlpha(auroraPalette[index % auroraPalette.length], (0.32 + bar * 0.22) * presence))
           gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
           context.fillStyle = gradient
           context.beginPath()
           context.ellipse(x, waveBase, 10 + bar * 22, barHeight, 0, 0, Math.PI * 2)
           context.fill()
         })
-        context.filter = 'none'
         context.restore()
       }
 
@@ -549,8 +628,11 @@ export function CameraStage(props: CameraStageProps) {
     }
 
     animationId = window.requestAnimationFrame(render)
-    return () => window.cancelAnimationFrame(animationId)
-  }, [anchors, auraAnchors, bars, bpm, cameraStatus, chakraColor, isPlaying, liveEnergy, personDetected, poemLines, videoRef])
+    return () => {
+      mounted = false
+      window.cancelAnimationFrame(animationId)
+    }
+  }, [auraAnchors])
 
   return (
     <section className="stage" aria-label="Camera visual effects stage">
