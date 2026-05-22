@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import type { CameraStatus } from '../camera/useCamera'
-import type { TrackingAnchors, TrackingStatus } from '../types'
+import type { FrequencyPeak, TrackingAnchors, TrackingStatus } from '../types'
 
 type CameraStageProps = {
   anchors: TrackingAnchors
@@ -9,6 +9,7 @@ type CameraStageProps = {
   bpm?: number
   cameraStatus: CameraStatus
   chakraColor?: string
+  frequencyPeaks?: FrequencyPeak[]
   heartbeatPulse?: boolean
   isPlaying: boolean
   liveEnergy: number
@@ -364,6 +365,7 @@ function drawCymaticsPattern(
   context: CanvasRenderingContext2D,
   offscreen: HTMLCanvasElement,
   bars: number[],
+  frequencyPeaks: FrequencyPeak[],
   chakraColor: string,
   cssWidth: number,
   cssHeight: number,
@@ -375,13 +377,24 @@ function drawCymaticsPattern(
   const chakraColors = getChakraColors(chakraColor)
   const [cr, cg, cb] = parseCssColor(chakraColors.line)
 
-  const indexed = bars.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v).slice(0, 8)
+  const peaks =
+    frequencyPeaks.length > 0
+      ? frequencyPeaks
+      : bars.map((magnitude, index) => ({
+          frequency: (index + 1) * 80,
+          magnitude,
+        }))
+  const topPeaks = peaks
+    .filter((peak) => peak.magnitude > 0.04 && peak.frequency > 0)
+    .sort((a, b) => b.magnitude - a.magnitude)
+    .slice(0, 8)
+  const totalMagnitude = topPeaks.reduce((sum, peak) => sum + peak.magnitude, 0) || 1
   const imageData = ctx.createImageData(res, res)
   const data = imageData.data
 
-  for (const { v, i } of indexed) {
-    if (v < 0.06) continue
-    const k = (i + 1) * 1.4
+  for (const peak of topPeaks) {
+    const weight = peak.magnitude / totalMagnitude
+    const k = Math.max(0.8, Math.min(28, peak.frequency / 80))
     const sinX = new Float32Array(res)
     const sinY = new Float32Array(res)
     for (let p = 0; p < res; p += 1) {
@@ -392,7 +405,7 @@ function drawCymaticsPattern(
     for (let row = 0; row < res; row += 1) {
       for (let col = 0; col < res; col += 1) {
         const px = (row * res + col) * 4
-        const contribution = Math.abs(sinX[col] * sinY[row]) * v
+        const contribution = Math.abs(sinX[col] * sinY[row]) * weight
         data[px] = Math.min(255, data[px] + cr * contribution)
         data[px + 1] = Math.min(255, data[px + 1] + cg * contribution)
         data[px + 2] = Math.min(255, data[px + 2] + cb * contribution)
@@ -479,6 +492,7 @@ export function CameraStage(props: CameraStageProps) {
         bpm = 70,
         cameraStatus,
         chakraColor = '#C8933A',
+        frequencyPeaks = [],
         isPlaying,
         liveEnergy,
         personDetected,
@@ -568,7 +582,7 @@ export function CameraStage(props: CameraStageProps) {
       const bpmColor = getBpmColor(bpm)
 
       if (isPlaying && offscreenRef.current) {
-        drawCymaticsPattern(context, offscreenRef.current, bars, chakraColor, cssWidth, cssHeight)
+        drawCymaticsPattern(context, offscreenRef.current, bars, frequencyPeaks, chakraColor, cssWidth, cssHeight)
         drawAuroraCurtain(context, cssWidth, cssHeight, time, energy, beatOpacity, reduceMotion)
       }
 

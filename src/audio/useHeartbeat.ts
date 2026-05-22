@@ -24,11 +24,14 @@ export function useHeartbeat(): HeartbeatState {
     mode: 'simulated',
   })
 
-  const baseBpmRef = useRef(70 + Math.random() * 6)
+  const baseBpmRef = useRef<number | null>(null)
   const bpmHistoryRef = useRef<number[]>([])
-  const startTimeRef = useRef(Date.now())
+  const startTimeRef = useRef<number | null>(null)
 
   useEffect(() => {
+    baseBpmRef.current = 70 + Math.random() * 6
+    startTimeRef.current = Date.now()
+
     let beatTimeout: ReturnType<typeof setTimeout> | null = null
     let flashTimeout: ReturnType<typeof setTimeout> | null = null
     let cancelled = false
@@ -37,9 +40,9 @@ export function useHeartbeat(): HeartbeatState {
       if (cancelled) return
 
       // Bowl calming: BPM drifts down by up to 8 over 3 minutes of exposure
-      const elapsed = (Date.now() - startTimeRef.current) / 1000
+      const elapsed = (Date.now() - (startTimeRef.current ?? Date.now())) / 1000
       const calm = Math.min(elapsed / 180, 1) * 8
-      const base = baseBpmRef.current - calm
+      const base = (baseBpmRef.current ?? 72) - calm
 
       // Realistic HRV: ±5% interval jitter per beat
       const interval = 60000 / base

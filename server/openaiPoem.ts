@@ -5,7 +5,16 @@ import { parsePoemModelOutput } from './validation'
 
 export type PoemGenerator = (request: PoemRequest) => Promise<PoemResponse>
 
-const buildPrompt = (request: PoemRequest) => `Create a short poem for a live camera and audio-reactive visual performance.
+const chakraLine = (request: PoemRequest) => {
+  const chakra = request.heartbeat.dominantChakra
+  if (!chakra) {
+    return '- dominant bowl chakra: unknown'
+  }
+
+  return `- dominant bowl chakra: ${chakra.name} (${chakra.frequency.toFixed(0)} Hz, ${chakra.color})`
+}
+
+const buildPrompt = (request: PoemRequest) => `Create a short poem for a live singing bowl and camera installation.
 
 Return only JSON with this shape:
 {
@@ -14,17 +23,14 @@ Return only JSON with this shape:
   "palette": { "primary": "#RRGGBB", "accent": "#RRGGBB" }
 }
 
-Sample: ${request.sampleName}
-Duration: ${request.durationSec.toFixed(1)} seconds
-Audio features:
-- average energy: ${request.features.averageEnergy.toFixed(3)}
-- peak energy: ${request.features.peakEnergy.toFixed(3)}
-- bass balance: ${request.features.bass.toFixed(3)}
-- mids balance: ${request.features.mids.toFixed(3)}
-- treble balance: ${request.features.treble.toFixed(3)}
-- pulse bpm: ${request.features.pulseBpm ?? 'unknown'}
+Session: ${request.session}
+Heartbeat and bowl state:
+- bpm: ${request.heartbeat.bpm}
+- trend: ${request.heartbeat.trend}
+- variability: ${request.heartbeat.variability.toFixed(3)}
+${chakraLine(request)}
 
-Style: intimate, luminous, restrained, human. Avoid cliche tech language.`
+Style: intimate, luminous, restrained, human. Use the bowl and body state as quiet inspiration. Avoid cliche tech language.`
 
 export async function generatePoemWithOpenAI(request: PoemRequest): Promise<PoemResponse> {
   const openRouterKey = process.env.OPENROUTER_API_KEY

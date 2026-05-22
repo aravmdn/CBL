@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('plays the sample, generates poetry, and renders a nonblank canvas', async ({ page }) => {
+test('starts the bowl session, generates poetry, and renders a nonblank canvas', async ({ page }) => {
   await page.route('**/api/poem', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -14,14 +14,15 @@ test('plays the sample, generates poetry, and renders a nonblank canvas', async 
 
   await page.goto('/')
   await expect(page.getByText('CBL')).toBeVisible()
-  await expect(page.getByRole('slider', { name: 'Volume' })).toBeVisible()
+  const controls = page.getByRole('complementary', { name: 'Controls' })
+  const micButton = page.getByRole('button', { name: 'Start bowl microphone' })
+  await page.mouse.move(24, 24)
+  await expect(controls).not.toHaveClass(/hidden/)
+  await expect(micButton).toBeVisible()
 
-  await page.getByRole('button', { name: 'Skip sample forward 10 seconds' }).click()
-  await expect(page.getByText('00:10')).toBeVisible()
-  await page.getByRole('button', { name: 'Restart sample' }).click()
-  await expect(page.getByText('00:00').first()).toBeVisible()
-
-  await page.getByRole('button', { name: 'Play sample' }).first().click()
+  await micButton.click()
+  await expect(page.getByText('Bowl session active')).toBeVisible()
+  await page.getByRole('button', { name: 'Regenerate poem' }).click()
   await expect(page.getByText('first light')).toBeVisible()
   await expect(page.getByText('Poem ready')).toBeVisible()
 

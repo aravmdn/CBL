@@ -4,6 +4,11 @@ export type ChakraInfo = {
   color: string
 }
 
+export type FrequencyPeak = {
+  frequency: number
+  magnitude: number
+}
+
 export type HeartbeatTrend = 'calming' | 'stable' | 'rising'
 
 export type HeartbeatFeatures = {
@@ -11,6 +16,11 @@ export type HeartbeatFeatures = {
   trend: HeartbeatTrend
   variability: number
   dominantChakra: ChakraInfo | null
+}
+
+export type BowlMeditationRequest = {
+  session: 'bowl-meditation'
+  heartbeat: HeartbeatFeatures
 }
 
 export type AudioFeatures = {
@@ -23,11 +33,7 @@ export type AudioFeatures = {
   dominantChakra: ChakraInfo | null
 }
 
-export type PoemRequest = {
-  sampleName: 'Luminous Drift'
-  durationSec: number
-  features: AudioFeatures
-}
+export type PoemRequest = BowlMeditationRequest
 
 export type PoemResponse = {
   lines: string[]

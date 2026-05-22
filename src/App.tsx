@@ -41,15 +41,19 @@ function App() {
   const [controlsVisible, setControlsVisible] = useState(true)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Auto-hide controls after inactivity
-  const showControls = useCallback(() => {
-    setControlsVisible(true)
+  const resetControlsHideTimer = useCallback(() => {
     if (hideTimerRef.current !== null) clearTimeout(hideTimerRef.current)
     hideTimerRef.current = setTimeout(() => setControlsVisible(false), INACTIVITY_HIDE_MS)
   }, [])
 
+  // Auto-hide controls after inactivity
+  const showControls = useCallback(() => {
+    setControlsVisible(true)
+    resetControlsHideTimer()
+  }, [resetControlsHideTimer])
+
   useEffect(() => {
-    showControls()
+    resetControlsHideTimer()
     const events = ['mousemove', 'mousedown', 'touchstart', 'keydown'] as const
     for (const event of events) {
       window.addEventListener(event, showControls, { passive: true })
@@ -60,7 +64,7 @@ function App() {
       }
       if (hideTimerRef.current !== null) clearTimeout(hideTimerRef.current)
     }
-  }, [showControls])
+  }, [resetControlsHideTimer, showControls])
 
   // Session is active when the bowl mic is listening
   const isSessionActive = mic.isListening
@@ -77,7 +81,7 @@ function App() {
         bpm: heartbeat.bpm,
         trend: heartbeat.trend,
         variability: heartbeat.variability,
-        dominantChakra: null, // filled once bowl chakra detection is wired to hardware
+        dominantChakra: mic.dominantChakra,
       })
       setPoem(nextPoem)
       setGenerationStatus('ready')
@@ -85,7 +89,7 @@ function App() {
       setGenerationStatus('error')
       setError(generateError instanceof Error ? generateError.message : 'Poetry generation failed.')
     }
-  }, [heartbeat.bpm, heartbeat.trend, heartbeat.variability])
+  }, [heartbeat.bpm, heartbeat.trend, heartbeat.variability, mic.dominantChakra])
 
   const generationLabel = useMemo(() => {
     if (generationStatus === 'ready') return 'Poem ready'
@@ -172,6 +176,8 @@ function App() {
         bars={mic.bars}
         bpm={heartbeat.bpm}
         cameraStatus={camera.status}
+        chakraColor={mic.dominantChakra?.color}
+        frequencyPeaks={mic.frequencyPeaks}
         heartbeatPulse={heartbeat.isBeating}
         isPlaying={isSessionActive}
         liveEnergy={liveEnergy}

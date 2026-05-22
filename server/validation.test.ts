@@ -6,15 +6,11 @@ import { InvalidPoemRequestError, InvalidPoemResponseError } from './errors'
 import { parsePoemModelOutput, validatePoemRequest } from './validation'
 
 const validRequest = {
-  sampleName: 'Luminous Drift',
-  durationSec: 48,
-  features: {
-    averageEnergy: 0.4,
-    peakEnergy: 0.8,
-    bass: 0.3,
-    mids: 0.5,
-    treble: 0.2,
-    pulseBpm: 84,
+  session: 'bowl-meditation',
+  heartbeat: {
+    bpm: 68,
+    trend: 'calming',
+    variability: 0.42,
     dominantChakra: null,
   },
 }
@@ -24,8 +20,23 @@ describe('poem validation', () => {
     expect(validatePoemRequest(validRequest)).toEqual(validRequest)
   })
 
+  it('accepts a live dominant chakra from bowl analysis', () => {
+    const parsed = validatePoemRequest({
+      ...validRequest,
+      heartbeat: {
+        ...validRequest.heartbeat,
+        dominantChakra: { name: 'Heart', frequency: 639, color: '#00ff00' },
+      },
+    })
+
+    expect(parsed.heartbeat.dominantChakra).toEqual({ name: 'Heart', frequency: 639, color: '#00ff00' })
+  })
+
   it('rejects malformed request payloads', () => {
-    expect(() => validatePoemRequest({ ...validRequest, sampleName: 'Other' })).toThrow(InvalidPoemRequestError)
+    expect(() => validatePoemRequest({ ...validRequest, session: 'Other' })).toThrow(InvalidPoemRequestError)
+    expect(() => validatePoemRequest({ ...validRequest, heartbeat: { ...validRequest.heartbeat, trend: 'falling' } })).toThrow(
+      InvalidPoemRequestError,
+    )
   })
 
   it('parses a valid model response', () => {

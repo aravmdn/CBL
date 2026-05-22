@@ -7,15 +7,12 @@ import { InvalidPoemResponseError, MissingProviderKeyError } from './errors'
 import { createApp } from './app'
 
 const poemRequest = {
-  sampleName: 'Luminous Drift',
-  durationSec: 48,
-  features: {
-    averageEnergy: 0.4,
-    peakEnergy: 0.8,
-    bass: 0.3,
-    mids: 0.5,
-    treble: 0.2,
-    pulseBpm: null,
+  session: 'bowl-meditation',
+  heartbeat: {
+    bpm: 68,
+    trend: 'calming',
+    variability: 0.42,
+    dominantChakra: null,
   },
 }
 

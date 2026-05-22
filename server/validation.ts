@@ -1,4 +1,4 @@
-import type { AudioFeatures, PoemRequest, PoemResponse } from '../src/types'
+import type { ChakraInfo, HeartbeatFeatures, HeartbeatTrend, PoemRequest, PoemResponse } from '../src/types'
 import { InvalidPoemRequestError, InvalidPoemResponseError } from './errors'
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value))
@@ -11,26 +11,63 @@ const readNumber = (value: unknown, label: string) => {
   return value
 }
 
-export function validateAudioFeatures(value: unknown): AudioFeatures {
+const HEARTBEAT_TRENDS = new Set<HeartbeatTrend>(['calming', 'stable', 'rising'])
+
+const normalizeHex = (value: unknown, fallback: string) => {
+  if (typeof value !== 'string') {
+    return fallback
+  }
+
+  const trimmed = value.trim()
+  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed : fallback
+}
+
+function validateChakra(value: unknown): ChakraInfo | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
   if (!value || typeof value !== 'object') {
-    throw new InvalidPoemRequestError('features must be an object.')
+    throw new InvalidPoemRequestError('heartbeat.dominantChakra must be an object or null.')
   }
 
   const input = value as Record<string, unknown>
-  const pulseBpm = input.pulseBpm
+  if (typeof input.name !== 'string' || input.name.trim().length === 0) {
+    throw new InvalidPoemRequestError('heartbeat.dominantChakra.name must be a non-empty string.')
+  }
 
-  if (pulseBpm !== null && pulseBpm !== undefined && (typeof pulseBpm !== 'number' || !Number.isFinite(pulseBpm))) {
-    throw new InvalidPoemRequestError('features.pulseBpm must be a number or null.')
+  const frequency = readNumber(input.frequency, 'heartbeat.dominantChakra.frequency')
+  if (frequency <= 0) {
+    throw new InvalidPoemRequestError('heartbeat.dominantChakra.frequency must be greater than zero.')
   }
 
   return {
-    averageEnergy: clamp01(readNumber(input.averageEnergy, 'features.averageEnergy')),
-    peakEnergy: clamp01(readNumber(input.peakEnergy, 'features.peakEnergy')),
-    bass: clamp01(readNumber(input.bass, 'features.bass')),
-    mids: clamp01(readNumber(input.mids, 'features.mids')),
-    treble: clamp01(readNumber(input.treble, 'features.treble')),
-    pulseBpm: pulseBpm === undefined ? null : pulseBpm,
-    dominantChakra: null,
+    name: input.name.trim(),
+    frequency,
+    color: normalizeHex(input.color, '#8ee8ff'),
+  }
+}
+
+function validateHeartbeat(value: unknown): HeartbeatFeatures {
+  if (!value || typeof value !== 'object') {
+    throw new InvalidPoemRequestError('heartbeat must be an object.')
+  }
+
+  const input = value as Record<string, unknown>
+  const bpm = readNumber(input.bpm, 'heartbeat.bpm')
+  if (bpm < 30 || bpm > 220) {
+    throw new InvalidPoemRequestError('heartbeat.bpm must be between 30 and 220.')
+  }
+
+  if (typeof input.trend !== 'string' || !HEARTBEAT_TRENDS.has(input.trend as HeartbeatTrend)) {
+    throw new InvalidPoemRequestError('heartbeat.trend must be calming, stable, or rising.')
+  }
+
+  return {
+    bpm: Math.round(bpm),
+    trend: input.trend as HeartbeatTrend,
+    variability: clamp01(readNumber(input.variability, 'heartbeat.variability')),
+    dominantChakra: validateChakra(input.dominantChakra),
   }
 }
 
@@ -40,29 +77,14 @@ export function validatePoemRequest(value: unknown): PoemRequest {
   }
 
   const input = value as Record<string, unknown>
-  if (input.sampleName !== 'Luminous Drift') {
-    throw new InvalidPoemRequestError('sampleName must be "Luminous Drift".')
-  }
-
-  const durationSec = readNumber(input.durationSec, 'durationSec')
-  if (durationSec <= 0) {
-    throw new InvalidPoemRequestError('durationSec must be greater than zero.')
+  if (input.session !== 'bowl-meditation') {
+    throw new InvalidPoemRequestError('session must be "bowl-meditation".')
   }
 
   return {
-    sampleName: 'Luminous Drift',
-    durationSec,
-    features: validateAudioFeatures(input.features),
+    session: 'bowl-meditation',
+    heartbeat: validateHeartbeat(input.heartbeat),
   }
-}
-
-const normalizeHex = (value: unknown, fallback: string) => {
-  if (typeof value !== 'string') {
-    return fallback
-  }
-
-  const trimmed = value.trim()
-  return /^#[0-9a-f]{6}$/i.test(trimmed) ? trimmed : fallback
 }
 
 const normalizeStringArray = (value: unknown, label: string, min: number, max: number) => {

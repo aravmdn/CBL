@@ -14,23 +14,23 @@ Tibetan singing bowl → physically alters person's heartbeat → Arduino pulse 
 
 ```
 npm install
-npm run dev        # Vite dev server on :5173, CF Worker proxy on :8787
-npm test           # Vitest (16 tests, all must pass before commit)
+npm run dev        # Vite dev server on :5173, Express API on :8787
+npm test           # Vitest tests
 npm run build      # TypeScript check + Vite production build
 ```
 
 Requires `OPENROUTER_API_KEY` or `OPENAI_API_KEY` in a `.env` file for poetry generation.
-The Cloudflare Worker in `functions/api/poem.ts` reads those vars at runtime.
+The Express API in `server/` reads those vars at runtime.
 
 ## Architecture
 
 ```
-useMicInput        — getUserMedia (bowl mic), AnalyserNode, 40-bar FFT visualizer
+useMicInput        — getUserMedia (bowl mic), AnalyserNode, top frequency peaks, chakra detection
 useHeartbeat       — simulated 70→62 BPM calming arc (hardware swap point marked)
 useCamera          — webcam via getUserMedia
 usePoseTracking    — MediaPipe PoseLandmarker, head/shoulder/torso anchors
 CameraStage        — canvas: aurora curtains + body aura + cymatics overlay + poem text
-requestPoem        — POST /api/poem with { session, heartbeat: { bpm, trend, variability } }
+requestPoem        — POST /api/poem with { session, heartbeat: { bpm, trend, variability, dominantChakra } }
 ```
 
 ## Key files
@@ -38,21 +38,23 @@ requestPoem        — POST /api/poem with { session, heartbeat: { bpm, trend, v
 | File | Purpose |
 |---|---|
 | `src/audio/useHeartbeat.ts` | Simulated heartbeat — **swap body for Web Serial API reads when Arduino arrives** |
-| `src/audio/useMicInput.ts` | Live mic capture for bowl audio |
+| `src/audio/useMicInput.ts` | Live mic capture for bowl audio, FFT peaks, nearest chakra |
 | `src/audio/audioAnalysis.ts` | Goertzel chakra detection (396–963 Hz), band energy, BPM estimation |
 | `src/components/CameraStage.tsx` | All canvas rendering: aura, cymatics (sin(kx)·sin(ky)), poem overlay |
-| `src/poetry/poemClient.ts` | POST /api/poem — accepts HeartbeatFeatures |
-| `functions/api/poem.ts` | CF Worker — calls OpenRouter/OpenAI, needs prompt update for bowl context |
+| `src/poetry/poemClient.ts` | POST /api/poem — sends HeartbeatFeatures |
+| `server/openaiPoem.ts` | Express API integration — calls OpenRouter/OpenAI with bowl/heartbeat prompt |
+| `server/validation.ts` | Validates the bowl meditation poem request |
 
 ## What is done
 
 - [x] Live bowl mic capture (`useMicInput`) with FFT visualizer bars
+- [x] Top-frequency peak detection from the live bowl mic
 - [x] Simulated heartbeat with calming BPM drift and HRV jitter (`useHeartbeat`)
-- [x] Goertzel chakra frequency detection on mic audio (7 solfeggio freqs from teammate's CSV)
+- [x] Chakra color detection from nearest live mic frequency
 - [x] Cymatics (Chladni) layer on canvas — ported from teammate's MATLAB `sin(kx)·sin(ky)`
 - [x] Heartbeat aura pulse — exponential decay `exp(-beatAge/300ms)` per beat
 - [x] MediaPipe body anchor tracking for aura positioning
-- [x] Poetry generation from heartbeat features (BPM, trend, variability)
+- [x] Poetry generation from heartbeat features plus detected chakra
 - [x] Copy poem, error states, seed poem for offline use
 - [x] Responsive layout (desktop + mobile)
 - [x] 16 passing tests
@@ -62,8 +64,8 @@ requestPoem        — POST /api/poem with { session, heartbeat: { bpm, trend, v
 | Task | Where to change | Notes |
 |---|---|---|
 | Arduino pulse sensor → real BPM | `src/audio/useHeartbeat.ts` — replace `setTimeout` loop with `navigator.serial` reads | Interface (`HeartbeatState`) is already defined; swap only the `useEffect` body |
-| Bowl chakra → live dominant chakra to poem API | `src/App.tsx` line ~55 — change `dominantChakra: null` to `mic.dominantChakra` | Need to expose `dominantChakra` from `useMicInput` (audioAnalysis already computes it) |
-| CF Worker prompt | `functions/api/poem.ts` | Update prompt template to use `heartbeat.bpm`, `heartbeat.trend`, `heartbeat.variability`, `heartbeat.dominantChakra` fields instead of old sample analysis fields |
+| Tune bowl chakra detection | `src/audio/useMicInput.ts` | Test with the real bowl/mic and tune frequency/magnitude thresholds if detection jumps |
+| Optional demo readout | `src/App.tsx` / `src/App.css` | Add a small visible chakra label if the group needs clearer proof of teammate integration |
 
 ## Teammate contributions (EngineeringArt CBL/)
 

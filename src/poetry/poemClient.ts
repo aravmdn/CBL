@@ -1,15 +1,17 @@
-import type { HeartbeatFeatures, PoemResponse } from '../types'
+import type { BowlMeditationRequest, HeartbeatFeatures, PoemResponse } from '../types'
 
 export async function requestPoem(heartbeat: HeartbeatFeatures): Promise<PoemResponse> {
+  const requestBody: BowlMeditationRequest = {
+    session: 'bowl-meditation',
+    heartbeat,
+  }
+
   const response = await fetch('/api/poem', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      session: 'bowl-meditation',
-      heartbeat,
-    }),
+    body: JSON.stringify(requestBody),
   })
 
   const payload = (await response.json()) as PoemResponse | { error?: string }

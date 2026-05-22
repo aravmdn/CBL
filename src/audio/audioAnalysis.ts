@@ -1,6 +1,6 @@
 import type { AudioFeatures, ChakraInfo } from '../types'
 
-const CHAKRAS: ReadonlyArray<ChakraInfo> = [
+export const CHAKRAS: ReadonlyArray<ChakraInfo> = [
   { name: 'Root',         frequency: 396, color: '#ff0000' },
   { name: 'Sacral',       frequency: 417, color: '#ff7f00' },
   { name: 'Solar Plexus', frequency: 528, color: '#ffff00' },
@@ -9,6 +9,12 @@ const CHAKRAS: ReadonlyArray<ChakraInfo> = [
   { name: 'Third Eye',    frequency: 852, color: '#4b0082' },
   { name: 'Crown',        frequency: 963, color: '#9400d3' },
 ]
+
+export function findNearestChakra(frequency: number): ChakraInfo {
+  return CHAKRAS.reduce((nearest, chakra) =>
+    Math.abs(chakra.frequency - frequency) < Math.abs(nearest.frequency - frequency) ? chakra : nearest,
+  )
+}
 
 export type AudioBufferLike = {
   sampleRate: number
@@ -122,8 +128,7 @@ export function analyzeSamples(channels: Float32Array[], sampleRate: number, dur
   const rms = Math.sqrt(sumSquares / Math.max(1, mixed.length))
 
   const dominantChakraIdx = chakraSums.reduce((best, val, i) => (val > chakraSums[best] ? i : best), 0)
-  const { name, frequency, color } = CHAKRAS[dominantChakraIdx]
-  const dominantChakra: ChakraInfo = { name, frequency, color }
+  const dominantChakra = CHAKRAS[dominantChakraIdx]
 
   return {
     averageEnergy: clamp01(rms * 2.4),
