@@ -7,12 +7,12 @@ TU/e Multi-Disciplinary CBL course project, Group 5, Year 2 Q4 2025-2026.
 
 Tibetan singing bowl -> physically alters person's heartbeat -> Arduino pulse sensor captures BPM/HRV -> web app drives:
 
-- Aurora aura on camera, pulsing with each beat
-- Cymatics interference pattern, shaped by bowl mic frequencies
-- Chakra color response from the teammate frequency table
+- Aurora aura on camera, pulsing with each beat; color encodes BPM (violet=calm, cyan=resting, amber=neutral, orange=elevated)
+- Cymatics interference pattern, shaped by bowl mic frequencies, colored by detected chakra
+- Chakra color response from the teammate frequency table (396–963 Hz Solfeggio scale)
 - TouchDesigner-inspired white visuals, audio bloom particles, and hand/body tracking nodes
 
-Latest direction update, 2026-05-25: poetry is no longer part of the active demo. Keep old poetry files as dormant legacy code only. The live experience should be an impressive design/TouchDesigner-style visual installation.
+**Direction as of 2026-05-25 (Meeting 5.2):** Poetry is permanently off the table. Focus is on the visual installation and the group report. Keep old poetry files as dormant legacy code only.
 
 ## Running The Project
 
@@ -28,21 +28,33 @@ No API key is required for the active visual app.
 ## Architecture
 
 ```text
-useMicInput        - getUserMedia (bowl mic), AnalyserNode, top frequency peaks, chakra detection
-useHeartbeat       - simulated 70->62 BPM calming arc (hardware swap point marked)
+useMicInput        - getUserMedia (bowl mic), AnalyserNode, top-8 FFT frequency peaks, chakra detection
+useHeartbeat       - simulated 70->62 BPM calming arc with HRV jitter (hardware swap point marked)
 useCamera          - webcam via getUserMedia
-usePoseTracking    - MediaPipe PoseLandmarker, head/shoulder/wrist/torso anchors
-CameraStage        - canvas: aurora curtains + body aura + cymatics + bloom particles + tracking nodes
+usePoseTracking    - MediaPipe PoseLandmarker, head/shoulder/wrist/torso anchors; mirrored for selfie view
+CameraStage        - canvas pipeline:
+                     1. deep void background (#06060C)
+                     2. mirrored camera feed (or fallback silhouette)
+                     3. color wash + ambient fog gradient
+                     4. white visual field (TouchDesigner-style ripple grid)
+                     5. cymatics pattern (chakra-colored sin(kx)*sin(ky), 64px offscreen canvas)
+                     6. aurora curtains (4 screen-blend ribbons, BPM-tinted on beat)
+                     7. body aura (OneEuroFilter-smoothed anchors, BPM→color halo + per-anchor glows)
+                     8. audio bloom particles (96 particles, chakra-colored)
+                     9. tracking nodes + skeleton lines (head/shoulders/wrists)
+                    10. frequency bar visualizer (bottom edge)
+App.tsx            - main shell; auto-hide controls after 3s inactivity; mic toggle; heartbeat + chakra readouts
 legacy poem API    - dormant server/client code, not connected to the active UI
 ```
 
 ## Reference Docs
 
-- `docs/index.md` - start here for current handoff.
-- `docs/current-status.md` - current app state and known risks.
-- `docs/matlab-integration-ideation.md` - teammate MATLAB integration rationale.
-- `docs/touchdesigner-reference.md` - TikTok reference link, goal, and TouchDesigner-inspired visual pass.
-- `docs/ai-handoff.md` - concise takeover notes for Claude/Codex.
+- `docs/index.md` — start here for current handoff.
+- `docs/current-status.md` — current app state and known risks.
+- `docs/matlab-integration-ideation.md` — teammate MATLAB integration rationale.
+- `docs/touchdesigner-reference.md` — TikTok reference link, goal, and TouchDesigner-inspired visual pass.
+- `docs/ai-handoff.md` — concise takeover notes for Claude/Codex.
+- `docs/touchdesigner-mcp.md` — how to use the claude-touchdesigner MCP plugin to build TD networks from Claude Code.
 
 ## Key Files
 
@@ -61,16 +73,22 @@ legacy poem API    - dormant server/client code, not connected to the active UI
 ## What Is Done
 
 - [x] Live bowl mic capture (`useMicInput`) with FFT visualizer bars
-- [x] Top-frequency peak detection from the live bowl mic
+- [x] Top-8 frequency peak detection from the live bowl mic
 - [x] Simulated heartbeat with calming BPM drift and HRV jitter (`useHeartbeat`)
-- [x] Chakra color detection from nearest live mic frequency
+- [x] Chakra color detection from nearest live mic frequency (396–963 Hz)
 - [x] Cymatics layer on canvas, ported from teammate's MATLAB `sin(kx) * sin(ky)`
-- [x] Heartbeat aura pulse with exponential decay per beat
+- [x] Full CHAKRA_COLORS table — cymatics render in the detected chakra color; gold default when none
+- [x] Heartbeat aura pulse with two-phase animation (80ms attack, 400ms exponential decay — mirrors cardiac wave)
+- [x] BPM→color aura mapping: violet (<62), cyan (62–72), amber (72–85), orange (≥85)
+- [x] OneEuroFilter on pose landmarks — aura glides instead of snapping
 - [x] MediaPipe body anchor tracking for aura positioning
 - [x] Wrist anchors for TouchDesigner-style hand/body tracking visuals
 - [x] TouchDesigner-inspired white visual field and audio-reactive bloom particles
+- [x] Auto-hide control rail (fades after 3s inactivity, returns on mouse/touch/key)
+- [x] Dark design system: #06060C background, Cormorant Garamond, glassmorphism panels
 - [x] Active poem UI removed
 - [x] Responsive layout focused on the visual stage
+- [x] claude-touchdesigner MCP plugin installed (v0.1.6) — see `docs/touchdesigner-mcp.md`
 
 ## Pending - Hardware Not Yet Available
 
@@ -96,9 +114,32 @@ The user shared this TikTok and asked to follow the tutorial/reference:
 
 Implementation decision: keep this as a React/Vite web app and translate the TouchDesigner learning path into canvas visuals: white abstract visuals, audio-reactive bloom particles, and wrist/body tracking nodes.
 
+## Team Task Division (from Meeting 5.2, 2026-05-22)
+
+| Person(s) | Task |
+|---|---|
+| Joris + Henk | Explain the meaning/narrative of the art for the report |
+| Alice | Experiment with bowl frequencies and ranges |
+| Arav + Mahiraa + Alejandra | Continue with code |
+| Alice + Joris + Henk | Group report (Overleaf) |
+
+Physical materials ordered: Tibetan singing bowl (Alice, Amazon Prime), better Arduino, black cloth for display.
+
 ## Constraints
 
 - Physical installation demo on 19 June 2026; code must work on a laptop pointed at a person.
 - All 6 disciplines should have a visible role; Arav owns the signal-processing pipeline.
 - Budget EUR 100; avoid paid services for the active demo.
-- Must work without internet for the demo. This is easier now because poetry is dormant.
+- Must work without internet for the demo (poetry is dormant; MediaPipe loads from CDN — test offline or bundle).
+
+## TouchDesigner MCP (AI-Assisted TD Development)
+
+The `claude-touchdesigner` plugin (v0.1.6) is installed globally for Arav's Claude Code.
+
+To use it:
+1. Open TouchDesigner, drag in `TouchDesignerAPI.tox` (path in `docs/touchdesigner-mcp.md`)
+2. Set Port = 44444 on the component
+3. In Claude Code, run `/touchdesigner` to load the skill
+4. Ask Claude to build TD networks in natural language
+
+Full setup and pattern reference: `docs/touchdesigner-mcp.md`.

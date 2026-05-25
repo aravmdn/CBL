@@ -12,7 +12,7 @@ This file is for Claude, Codex, or another coding assistant picking up the CBL p
 4. `CLAUDE.md`
 5. `README.md`
 
-Important: the current direction is visual-first. Poetry is parked as legacy code and should not be treated as part of the active product unless the user explicitly asks to bring it back.
+Important: the current direction is visual-first. **Poetry is permanently removed** (confirmed Meeting 5.2, 2026-05-22 — "poetry is off the table"). Do not treat it as part of the active product under any circumstances unless the user explicitly says otherwise.
 
 ## Project Direction
 
@@ -60,6 +60,37 @@ Useful phrase:
 ```text
 The MATLAB part analyzes the sound. The web app turns that analysis into the live visuals.
 ```
+
+## TouchDesigner MCP Plugin
+
+The `claude-touchdesigner` MCP plugin (v0.1.6) is installed on Arav's machine. It connects Claude Code to a running TouchDesigner instance over HTTP.
+
+To use it in a session:
+1. Open TouchDesigner, drag in the TOX (path in `docs/touchdesigner-mcp.md`)
+2. Set Port = 44444 on the component
+3. Run `/touchdesigner` in Claude Code to load the skill
+4. Then ask Claude to build TD networks in natural language
+
+This is for prototyping GLSL effects and visual ideas in TD; the live demo product remains the React/Vite web app.
+
+## Visual Changes Since Midterm (2026-05-19 → 2026-05-25)
+
+These were all implemented in response to Meeting 5 feedback ("UI too cutesy"):
+
+1. **Design system**: #06060C background, Cormorant Garamond, glassmorphism panels, violet borders
+2. **BPM→color aura**: violet (<62 BPM), cyan (62–72), amber (72–85), orange (≥85) — biometric color display
+3. **Heartbeat animation**: two-phase (80ms attack + 400ms exponential decay), mirrors cardiac pressure wave
+4. **OneEuroFilter**: adaptive low-pass on pose landmarks — aura glides instead of snapping
+5. **Full CHAKRA_COLORS table**: cymatics render in detected chakra color; gold default when none
+6. **Auto-hide control rail**: fades after 3s inactivity, returns on any mouse/touch/key
+
+## Team State (Meeting 5.2, 2026-05-22)
+
+- Poetry permanently off the table
+- Bowl ordered (Alice); better Arduino being sourced; black cloth for display
+- Report being written on Overleaf (Alice, Joris, Henk)
+- Code continues (Arav, Mahiraa, Alejandra)
+- Physical assembly being explored by Henk (wood box enclosure / photobooth style)
 
 ## Recent User Requests And Decisions
 

@@ -16,13 +16,15 @@ The `EngineeringArt CBL/` folder and zip are teammate work. They contain MATLAB 
 
 ## Latest Direction Update
 
-Poetry is no longer an active part of the demo.
+Poetry is permanently off the table (confirmed Meeting 5.2, 2026-05-22).
 
 The current project focus is:
 
 ```text
-design quality + TouchDesigner-style visuals + bowl sound + body tracking
+visual installation quality + report + physical hardware + bowl sound + body tracking
 ```
+
+Group is now split: Joris/Henk/Alice writing the report; Arav/Mahiraa/Alejandra on code. Bowl has been ordered. Better Arduino and black display cloth also being sourced.
 
 Old poem-related code can stay as dormant legacy code for now, but new UI work should not build around poems.
 
@@ -32,18 +34,20 @@ The app is a React/Vite browser prototype for an interactive visual installation
 
 Current experience:
 
-- Webcam feed appears on a canvas.
-- MediaPipe pose tracking finds the person.
-- A glowing aura is drawn around the body.
-- A simulated heartbeat controls BPM and pulsing.
+- Webcam feed appears on a canvas (mirrored for selfie view).
+- MediaPipe pose tracking finds the person; landmarks smoothed via OneEuroFilter so the aura glides.
+- A glowing aura is drawn around the body; color encodes BPM (violet=calm, cyan=resting, amber=neutral, orange=elevated).
+- Heartbeat pulse is a two-phase animation (80ms attack / 400ms exponential decay) matching the cardiac pressure wave.
 - The microphone can be turned on for bowl input.
-- Browser FFT analysis finds strongest bowl frequencies.
-- The nearest chakra is selected from the teammate frequency/color table.
-- The cymatics layer uses real frequency peaks with the teammate `frequency / 80` pattern logic.
-- A TouchDesigner-inspired layer adds white visual lines, bloom particles, and visible tracking nodes.
+- Browser FFT analysis finds strongest bowl frequencies (top 8 peaks).
+- The nearest chakra is selected from the teammate frequency/color table (396–963 Hz Solfeggio).
+- The cymatics layer renders in the detected chakra color (gold default when none); sin(kx)*sin(ky) via teammate MATLAB formula.
+- A TouchDesigner-inspired layer adds white ripple visual field, bloom particles, and visible skeleton/tracking nodes.
 - Wrist tracking is exposed from MediaPipe and used for hand/body node visuals.
+- Control rail auto-hides after 3s of inactivity; returns on any input.
 - The stage status can show detected chakra and approximate frequency.
 - The UI has no active poem panel, poem button, or poem overlay.
+- Design system: near-void dark background (#06060C), Cormorant Garamond typography, glassmorphism panels.
 
 The visual direction has moved away from the older sample-audio/text prototype and toward a Tibetan singing bowl / heartbeat / cymatics visual installation.
 
@@ -98,6 +102,10 @@ Browser smoke check:
 
 ## Current Implementation Notes
 
+### 0. TouchDesigner MCP Plugin
+
+The `claude-touchdesigner` MCP plugin (v0.1.6) is installed. See `docs/touchdesigner-mcp.md` for full setup. This lets Claude Code build TouchDesigner networks directly — useful for prototyping GLSL effects and visual ideas before porting them to the canvas. `TDAPI_PORT=44444` is set permanently in Windows user environment variables.
+
 ### 1. Active Poetry Was Removed From The UI
 
 `src/App.tsx` no longer imports or calls `requestPoem`.
@@ -132,6 +140,15 @@ The key teammate formula is preserved:
 k = frequency / 80
 pattern += magnitude * sin(k * X) * sin(k * Y)
 ```
+
+### 3b. Design System Overhaul
+
+Following Meeting 5 feedback ("UI is too cutesy"), the visual language was overhauled:
+- Background changed to `#06060C` (near-void dark) so glowing effects read as light from darkness
+- Typography changed to Cormorant Garamond (weights 300/400/500) from Google Fonts
+- UI panels use glassmorphism (`rgba(5,5,20,0.42)` + `backdrop-filter: blur(8px)`)
+- Panel borders changed to soft violet `rgba(177,121,210,0.3)` to match aurora palette
+- Control rail auto-hides after 3s inactivity via smooth 1200ms cubic-bezier ease-out
 
 ### 4. TouchDesigner Reference Pass
 
