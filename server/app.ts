@@ -19,6 +19,7 @@ export function createApp(options: CreateAppOptions = {}) {
     response.json({ ok: true })
   })
 
+  // Dormant legacy route. The active frontend no longer calls this endpoint.
   app.post('/api/poem', async (request, response) => {
     try {
       const poemRequest = validatePoemRequest(request.body)

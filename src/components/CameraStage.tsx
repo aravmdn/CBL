@@ -16,7 +16,6 @@ type CameraStageProps = {
   isPlaying: boolean
   liveEnergy: number
   personDetected: boolean
-  poemLines: string[]
   trackingStatus: TrackingStatus
   videoRef: RefObject<HTMLVideoElement | null>
 }
@@ -285,69 +284,6 @@ function drawBodyAura(
     context.ellipse(cx, cy, radius * (1.05 + index * 0.12), radius * (0.66 + index * 0.07), Math.sin(motion + index) * 0.34, 0, Math.PI * 2)
     context.fill()
   })
-  context.restore()
-}
-
-function drawFloatingPoem(
-  context: CanvasRenderingContext2D,
-  lines: string[],
-  center: { x: number; y: number },
-  bodyHalfWidth: number,
-  width: number,
-  height: number,
-  time: number,
-  presence: number,
-  reduceMotion: boolean,
-) {
-  if (lines.length === 0) {
-    return
-  }
-
-  const visibleLines = lines.slice(0, 7)
-  const fontSize = clamp(width * 0.02, 17, 26)
-  const lineGap = fontSize * 2.5
-  const motion = reduceMotion ? 0 : time * 0.001
-  const sideGap = bodyHalfWidth + fontSize * 1.8
-  const total = visibleLines.length
-  const spread = Math.min(height * 0.6, total * lineGap)
-
-  context.save()
-  context.font = `300 ${fontSize}px 'Cormorant Garamond', Georgia, serif`
-  context.textBaseline = 'middle'
-  if ('letterSpacing' in context) {
-    (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '0.06em'
-  }
-  context.globalCompositeOperation = 'screen'
-
-  visibleLines.forEach((line, index) => {
-    // Float lines on alternating sides of the body so they orbit the aura
-    // without crossing the face.
-    const side = index % 2 === 0 ? -1 : 1
-    const t = total > 1 ? index / (total - 1) : 0.5
-    const baseY = center.y + (t - 0.5) * spread
-    const driftX = reduceMotion ? 0 : Math.sin(motion * 0.7 + index * 0.9) * 11
-    const driftY = reduceMotion ? 0 : Math.cos(motion * 0.55 + index * 1.1) * 7
-    const x = clamp(center.x + side * sideGap + driftX, fontSize * 2, width - fontSize * 2)
-    const y = clamp(baseY + driftY, fontSize, height - fontSize)
-    const breath = reduceMotion ? 1 : 0.78 + 0.22 * Math.sin(motion * 0.6 + index * 0.8)
-    const alpha = presence * breath
-
-    context.textAlign = side < 0 ? 'right' : 'left'
-
-    // Soft violet bloom
-    context.shadowColor = `rgba(181, 123, 214, ${0.85 * presence})`
-    context.shadowBlur = 22
-    context.fillStyle = `rgba(244, 240, 250, ${0.5 * alpha})`
-    context.fillText(line, x, y)
-
-    // Crisp warm-white core
-    context.shadowColor = `rgba(255, 255, 255, ${0.85 * presence})`
-    context.shadowBlur = 6
-    context.fillStyle = `rgba(248, 245, 255, ${0.95 * alpha})`
-    context.fillText(line, x, y)
-  })
-
-  context.shadowBlur = 0
   context.restore()
 }
 
@@ -651,7 +587,6 @@ export function CameraStage(props: CameraStageProps) {
         isPlaying,
         liveEnergy,
         personDetected,
-        poemLines,
         videoRef,
       } = propsRef.current
 
@@ -723,7 +658,7 @@ export function CameraStage(props: CameraStageProps) {
 
       const effectsActive = isPlaying && personDetected
 
-      // Smoothly advance presence (aura/poem fade) and energy envelope — no React renders.
+      // Smoothly advance presence (aura/visual fade) and energy envelope — no React renders.
       presence += ((effectsActive ? 1 : 0) - presence) * 0.08
 
       const beatAge = time - lastBeatTimeRef.current
@@ -765,16 +700,10 @@ export function CameraStage(props: CameraStageProps) {
 
         const head = getPoint('head')
         const torso = getPoint('torso')
-        const poemCenter = { x: torso.x, y: (head.y + torso.y) / 2 }
-        const leftShoulder = smoothed.leftShoulder
-        const rightShoulder = smoothed.rightShoulder
-        const bodyHalfWidth =
-          leftShoulder && rightShoulder
-            ? (Math.abs(leftShoulder.x - rightShoulder.x) * cssWidth) / 2 + 46
-            : cssWidth * 0.13
+        const bloomCenter = { x: torso.x, y: (head.y + torso.y) / 2 }
         drawAudioBloomParticles(
           context,
-          poemCenter,
+          bloomCenter,
           cssWidth,
           cssHeight,
           time,
@@ -787,7 +716,6 @@ export function CameraStage(props: CameraStageProps) {
           reduceMotion,
         )
         drawTrackingNodes(context, getPoint, smoothed, energy, beatOpacity, presence)
-        drawFloatingPoem(context, poemLines, poemCenter, bodyHalfWidth, cssWidth, cssHeight, time, presence, reduceMotion)
 
         const waveBase = cssHeight - 42
         const waveStart = cssWidth * 0.18

@@ -1,31 +1,30 @@
-# CBL Singing Bowl Installation
+# CBL Singing Bowl Visual Installation
 
-CBL is a local browser prototype for a live installation built around a Tibetan singing bowl, a person on camera, simulated heartbeat data, cymatics, and AI-generated poetry.
+CBL is a local browser prototype for a live installation built around a Tibetan singing bowl, a person on camera, simulated heartbeat data, cymatics, and TouchDesigner-inspired visuals.
 
-The main idea is simple:
+Current direction:
 
 ```text
 The bowl sound controls the color and pattern.
 The heartbeat controls the pulse.
 The camera places the aura around the person.
-The poem responds to the body and sound state.
+The visual stage is the main artwork.
 ```
 
-Camera frames stay in the browser. The server receives only summarized heartbeat/chakra information when generating a poem.
+Poetry is no longer part of the active app experience. The old poem client/server code is still in the repo as dormant legacy code in case the team wants it later, but the live UI does not show poems, poem buttons, or poem overlays.
 
 ## Key Features
 
 - Webcam-based visual stage with mirrored camera feed or fallback scene.
-- MediaPipe pose tracking for head, shoulder, and torso anchors.
+- MediaPipe pose tracking for head, shoulder, wrist, and torso anchors.
 - Bowl microphone input through the browser.
 - Live FFT analysis that finds the strongest bowl frequencies.
 - Chakra detection using the teammate frequency/color table.
 - Artistic cymatics layer based on the teammate MATLAB formula `k = frequency / 80`.
 - TouchDesigner-inspired white visual field, bloom particles, and tracking-node overlays.
 - Simulated heartbeat with BPM drift, HRV-style variability, and beat pulses.
-- AI poem generation through OpenRouter or OpenAI-compatible configuration.
-- Seed poem fallback for offline/demo use.
-- Unit, component, API, and Playwright E2E tests.
+- Responsive control rail focused on mic, pulse, chakra, and frequency status.
+- Unit, component, legacy API, and Playwright E2E tests.
 
 ## Tech Stack
 
@@ -33,8 +32,7 @@ Camera frames stay in the browser. The server receives only summarized heartbeat
 - **Rendering**: HTML canvas 2D API
 - **Audio**: Web Audio API
 - **Camera / Pose Tracking**: `navigator.mediaDevices.getUserMedia` and `@mediapipe/tasks-vision`
-- **Backend**: Express 5, TypeScript, `tsx`
-- **AI Provider**: OpenRouter by default, with OpenAI SDK compatibility
+- **Backend**: Express 5, TypeScript, `tsx` for dormant legacy poem API
 - **Testing**: Vitest, React Testing Library, Supertest, Playwright
 - **Package Manager**: npm
 
@@ -46,24 +44,33 @@ Camera frames stay in the browser. The server receives only summarized heartbeat
 ├── public/
 │   └── audio/                    # Legacy sample audio assets
 ├── scripts/                      # Legacy sample-generation helper
-├── server/
-│   ├── app.ts                    # Express app and API routes
-│   ├── index.ts                  # API server entrypoint
-│   ├── openaiPoem.ts             # OpenRouter/OpenAI poetry integration
-│   └── validation.ts             # Request and model-output validation
+├── server/                       # Dormant legacy poem API
 ├── src/
 │   ├── audio/                    # Mic, heartbeat, and audio/chakra analysis
 │   ├── camera/                   # Webcam and MediaPipe pose tracking hooks
 │   ├── components/               # Canvas camera stage
-│   ├── poetry/                   # Browser API client
+│   ├── poetry/                   # Dormant legacy browser API client
 │   ├── App.tsx                   # Main app shell
 │   └── types.ts                  # Shared request/response and tracking types
 ├── tests/
 │   └── e2e/                      # Playwright browser test
-├── CLAUDE.md                     # Existing architecture note
+├── CLAUDE.md                     # AI handoff architecture note
 ├── package.json                  # Scripts and dependencies
 └── vite.config.ts                # Vite dev server and test config
 ```
+
+## Current Design Direction
+
+The latest project pivot removes poetry from the live demo and puts the focus on the visual installation.
+
+Plain group explanation:
+
+```text
+The MATLAB part analyzes the bowl sound.
+The web app turns that sound into live visuals around the person.
+```
+
+The final demo should feel like a polished audiovisual artwork, not a text-generation app.
 
 ## Teammate MATLAB Integration
 
@@ -76,7 +83,7 @@ It provides:
 - cymatics pattern generation
 - chakra frequency/color mapping
 
-The web app now translates that idea into browser code:
+The web app translates that idea into browser code:
 
 ```text
 bowl sound
@@ -84,14 +91,14 @@ bowl sound
 -> strongest frequencies
 -> nearest chakra color
 -> cymatics pattern and aura tint
--> poem context
+-> TouchDesigner-style visual response
 ```
 
 The current visuals are intentionally artistic, not a direct MATLAB graph. The scientific role of the MATLAB work is still present because the real bowl sound drives the pattern and color.
 
 ## TouchDesigner Visual Reference
 
-The current stage also follows ideas from this TikTok reference:
+The current stage follows ideas from this TikTok reference:
 
 - https://vm.tiktok.com/ZGdHggUDC/
 - resolved: https://www.tiktok.com/@studio.kashi/video/7617655149653167390
@@ -104,7 +111,8 @@ The TikTok recommends learning TouchDesigner through white abstract visuals, aud
 - npm 11 or newer
 - A webcam for the full interactive experience
 - A microphone for bowl input
-- Optional: OpenRouter or OpenAI API key for live poem generation
+
+No API key is required for the active visual demo.
 
 ## Getting Started
 
@@ -114,31 +122,7 @@ The TikTok recommends learning TouchDesigner through white abstract visuals, aud
 npm install
 ```
 
-### 2. Configure Environment Variables
-
-Create a local `.env` file from the example:
-
-```bash
-copy .env.example .env
-```
-
-On macOS/Linux, use:
-
-```bash
-cp .env.example .env
-```
-
-Set at least one provider key for live poem generation:
-
-```env
-OPENROUTER_API_KEY=your-openrouter-key
-OPENROUTER_MODEL=openai/gpt-4o-mini
-PORT=8787
-```
-
-The app still works visually without an API key, but live poem generation will show a clear missing-key error. The seed poem remains available.
-
-### 3. Start The App
+### 2. Start The App
 
 ```bash
 npm run dev
@@ -153,33 +137,37 @@ http://127.0.0.1:5173/
 The command starts both processes:
 
 - Vite app: `http://127.0.0.1:5173/`
-- Express API: `http://127.0.0.1:8787/`
+- Express legacy API: `http://127.0.0.1:8787/`
 
-The API URL is not the app UI. If the browser shows only API output or a blank route, use port `5173`.
+The active app UI is on port `5173`. The legacy API is kept only because the old poem code still has tests.
+
+If port `5173` is already in use, close the old dev server or run only the client on a different port:
+
+```bash
+npm run dev:client -- --port 5174
+```
 
 ## Available Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the API server and Vite app together. |
+| `npm run dev` | Start the Vite app and legacy API together. |
 | `npm run dev:client` | Start only the Vite frontend on strict port `5173`. |
-| `npm run server` | Start only the Express API in watch mode. |
-| `npm run server:start` | Start only the Express API without watch mode. |
+| `npm run server` | Start only the dormant legacy Express API in watch mode. |
+| `npm run server:start` | Start only the dormant legacy Express API without watch mode. |
 | `npm run sample:audio` | Regenerate the legacy sample audio asset. |
 | `npm run build` | Typecheck and build the Vite app. |
 | `npm run lint` | Run ESLint. |
-| `npm run test` | Run Vitest unit, component, and API tests. |
+| `npm run test` | Run Vitest unit, component, and legacy API tests. |
 | `npm run test:e2e` | Run the Playwright browser test. |
 | `npm run test:all` | Run Vitest and Playwright tests. |
 
 ## How It Works
 
-### Runtime Flow
-
 ```text
 Camera
   -> local pose tracking
-  -> body anchors for aura and poem placement
+  -> body anchors for aura, bloom, and tracking nodes
 
 Bowl microphone
   -> browser FFT analysis
@@ -189,64 +177,30 @@ Bowl microphone
 
 Simulated heartbeat
   -> BPM, trend, variability, beat pulse
-  -> aura pulse and poem context
-
-Poem button
-  -> POST /api/poem
-  -> OpenRouter/OpenAI text generation
-  -> poem lines returned to browser
+  -> aura pulse and visual intensity
 ```
 
-### Privacy Boundary
+## Privacy Boundary
 
 The browser asks for camera and microphone access.
 
 - Camera frames stay in the browser.
 - Microphone audio stays in the browser.
-- The server receives only summarized heartbeat/chakra data for poem generation.
+- The active app does not send camera frames, microphone audio, heartbeat data, or chakra data to the server.
 
-### API Contract
+## Dormant Poetry Code
 
-`POST /api/poem`
+Poetry is parked for now, not deleted.
 
-Request:
+Legacy files still exist:
 
-```json
-{
-  "session": "bowl-meditation",
-  "heartbeat": {
-    "bpm": 68,
-    "trend": "calming",
-    "variability": 0.4,
-    "dominantChakra": {
-      "name": "Heart",
-      "frequency": 639,
-      "color": "#00ff00"
-    }
-  }
-}
-```
+- `src/poetry/poemClient.ts`
+- `server/app.ts`
+- `server/openaiPoem.ts`
+- `server/validation.ts`
+- `server/*.test.ts`
 
-`dominantChakra` can be `null` when no strong bowl frequency is detected yet.
-
-Response:
-
-```json
-{
-  "lines": [
-    "the bowl rings",
-    "your pulse slows to meet it",
-    "sound becomes body",
-    "body becomes still",
-    "in the resonance"
-  ],
-  "moodWords": ["resonant", "still", "present"],
-  "palette": {
-    "primary": "#8ee8ff",
-    "accent": "#f4c979"
-  }
-}
-```
+Do not treat these as active product behavior. They are there only in case the group decides to bring text generation back later.
 
 ## Testing
 
@@ -262,11 +216,11 @@ npm run test:e2e
 Current coverage includes:
 
 - deterministic audio feature extraction
-- poem request validation and malformed provider output handling
-- missing provider-key API behavior
-- app states for camera granted/denied and poem generation
-- canvas aura/cymatics rendering behavior
-- Playwright flow for starting the bowl session, generating a poem, and checking a nonblank canvas
+- visual app shell without active poetry controls
+- camera granted/denied app states
+- canvas aura/cymatics/bloom rendering behavior
+- dormant legacy poem API validation
+- Playwright flow for starting the bowl session and checking a nonblank canvas
 
 Playwright uses fake camera/microphone permissions, so real bowl detection still needs manual testing with the physical setup.
 
@@ -274,22 +228,19 @@ Playwright uses fake camera/microphone permissions, so real bowl detection still
 
 ### The Browser Opens `http://127.0.0.1:8787/`
 
-That is the API server. Use the frontend URL:
+That is the legacy API server. Use the frontend URL:
 
 ```text
 http://127.0.0.1:5173/
 ```
 
-### Poetry Generation Says A Key Is Missing
+### Port `5173` Is Already In Use
 
-Check that `.env` exists and includes one of:
+Another Vite server is already running. Close that terminal, or run:
 
-```env
-OPENROUTER_API_KEY=...
-OPENAI_API_KEY=...
+```bash
+npm run dev:client -- --port 5174
 ```
-
-Restart `npm run dev` after changing `.env`.
 
 ### Camera Or Microphone Permission Is Denied
 
@@ -312,20 +263,17 @@ Press the microphone button to start the bowl session. The strongest visual effe
 
 This is currently designed as a local prototype. A production deployment would need:
 
-- a hosted API service for `server/index.ts`
 - HTTPS for camera and microphone access outside localhost
-- provider keys stored in hosting secrets
 - a static frontend build from `npm run build`
-- CORS and rate limits appropriate for public traffic
-
-For a quick hosted split, deploy the Vite app as static assets and run the Express API on a Node-capable host. Keep all provider keys on the server side.
+- optional hosting for the dormant legacy API only if poetry is re-enabled
+- CORS and rate limits if any public API is exposed later
 
 ## Security Notes
 
 - Never commit `.env` or real API keys.
 - Rotate any key that was pasted into chat or logs.
 - Camera frames and raw microphone audio are intentionally kept client-side.
-- API responses are validated before reaching the UI.
+- The active visual app does not need a text-generation provider key.
 
 ## License
 

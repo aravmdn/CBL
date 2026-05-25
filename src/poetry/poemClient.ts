@@ -1,5 +1,6 @@
 import type { BowlMeditationRequest, HeartbeatFeatures, PoemResponse } from '../types'
 
+// Dormant legacy path: poetry is not imported by the active visual app.
 export async function requestPoem(heartbeat: HeartbeatFeatures): Promise<PoemResponse> {
   const requestBody: BowlMeditationRequest = {
     session: 'bowl-meditation',

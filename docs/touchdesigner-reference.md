@@ -29,7 +29,7 @@ The extracted local review frames were kept only in `tmp/tiktok-7617655149653167
 Make the current web app visibly closer to the TouchDesigner examples while keeping the existing installation concept:
 
 ```text
-singing bowl sound + heartbeat + camera tracking + poem
+singing bowl sound + heartbeat + camera tracking + live visuals
 ```
 
 The goal was not to add TouchDesigner as a dependency. The goal was to make the app visibly respond like a creative audiovisual system:
@@ -38,6 +38,7 @@ The goal was not to add TouchDesigner as a dependency. The goal was to make the 
 - audio-reactive bloom particles
 - visible hand/body tracking cues
 - stronger proof that mic/camera data affect the stage
+- no active poem layer; the visuals carry the experience
 
 ## What Was Implemented
 
@@ -81,12 +82,18 @@ Heart 639 Hz
 
 This makes the teammate sound-analysis work easier to explain during a demo.
 
+### Poetry Removed From The Active Stage
+
+The latest direction removes poem text from the visible experience. The canvas should now read as a visual installation first: body aura, cymatics, bloom, white field, and tracking nodes.
+
+The old poem API/client files remain in the repo only as dormant legacy code.
+
 ## Files Changed For This Pass
 
 - `src/types.ts`: added wrist anchors to `TrackingAnchors`.
 - `src/camera/usePoseTracking.ts`: maps MediaPipe wrist landmarks into tracking anchors.
 - `src/components/CameraStage.tsx`: adds white visual field, bloom particles, tracking nodes, and chakra/frequency status.
-- `src/App.tsx`: passes chakra name and dominant frequency into the stage.
+- `src/App.tsx`: passes chakra name and dominant frequency into the stage and no longer calls the poem API.
 - `src/components/CameraStage.test.tsx`: updates canvas expectations now that line strokes are intentional.
 - `README.md`: mentions TouchDesigner-inspired stage visuals.
 - `docs/current-status.md`: records current behavior.
@@ -104,6 +111,12 @@ Slightly fuller version:
 
 ```text
 The TikTok suggested learning TouchDesigner through white visuals, audio-reactive particles, and hand tracking. Instead of rebuilding the whole project in TouchDesigner, we translated those ideas into our React canvas: the stage now has white abstract visuals, audio-reactive bloom particles, and visible wrist/body tracking.
+```
+
+Current pivot:
+
+```text
+We removed the poetry from the active demo so the main artwork is the visual response to the bowl, heartbeat, and person on camera.
 ```
 
 ## Remaining Risk

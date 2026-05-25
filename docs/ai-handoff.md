@@ -12,14 +12,14 @@ This file is for Claude, Codex, or another coding assistant picking up the CBL p
 4. `CLAUDE.md`
 5. `README.md`
 
-Important: `README.md` has been updated for the current bowl installation. `CLAUDE.md` is still useful as architecture context, but the current server code is under `server/`.
+Important: the current direction is visual-first. Poetry is parked as legacy code and should not be treated as part of the active product unless the user explicitly asks to bring it back.
 
 ## Project Direction
 
-The app is now aimed at a live installation:
+The app is now aimed at a live visual installation:
 
 ```text
-Tibetan singing bowl + person on camera + heartbeat + AI poem
+Tibetan singing bowl + person on camera + heartbeat + TouchDesigner-style visuals
 ```
 
 The intended final interaction:
@@ -28,14 +28,25 @@ The intended final interaction:
 person stands/sits in front of camera
 -> bowl sound is captured by microphone
 -> app detects bowl frequencies and chakra color
--> aura/cymatics respond visually
+-> aura/cymatics/bloom respond visually
 -> heartbeat controls pulse
--> poem is generated from body/sound state
+-> body tracking places the effects around the person
 ```
+
+## Latest User Decision
+
+The user said the group is likely removing the poetry aspect and focusing completely on design and TouchDesigner-style visuals.
+
+Decision:
+
+- Remove poetry from the active UI.
+- Do not show poem panels, poem buttons, poem text, or poem overlays.
+- Keep legacy poetry files in the repo only as dormant code.
+- Update README and docs so a future AI does not assume poetry is still a live requirement.
 
 ## User Preference From Discussion
 
-The user prefers a simple, understandable explanation over heavy technical language.
+The user prefers simple explanations over heavy technical language.
 
 When writing docs or presentation copy:
 
@@ -69,7 +80,7 @@ Result:
 - live mic FFT/top-frequency analysis
 - nearest chakra detection
 - cymatics driven by detected frequencies
-- poem API receives heartbeat plus chakra context
+- chakra/frequency data shown through the visual stage
 
 ### TouchDesigner TikTok Reference
 
@@ -110,29 +121,21 @@ The `EngineeringArt CBL/` folder and zip are teammate work. Treat them as refere
 
 ## Current Technical State
 
-### Frontend/server poem payload
+### Active App Flow
 
-Frontend and server now use the bowl meditation payload:
+`src/App.tsx` now wires the active app as:
 
-```json
-{
-  "session": "bowl-meditation",
-  "heartbeat": {
-    "bpm": 68,
-    "trend": "calming",
-    "variability": 0.4,
-    "dominantChakra": {
-      "name": "Heart",
-      "frequency": 639,
-      "color": "#00ff00"
-    }
-  }
-}
+```text
+useMicInput -> CameraStage
+useHeartbeat -> CameraStage
+useCamera/usePoseTracking -> CameraStage
 ```
 
-### Live chakra is wired
+There is no active poem request from the UI.
 
-`src/audio/useMicInput.ts` now returns:
+### Live Chakra Is Wired
+
+`src/audio/useMicInput.ts` returns:
 
 ```text
 frequencyPeaks
@@ -140,11 +143,11 @@ dominantFrequency
 dominantChakra
 ```
 
-`src/App.tsx` passes chakra data to both `CameraStage` and `requestPoem`.
+`src/App.tsx` passes this data to `CameraStage` and uses it for compact signal readouts.
 
-### TouchDesigner-style visual pass
+### TouchDesigner-Style Visual Pass
 
-After reviewing the TikTok reference, `CameraStage` also includes a stronger visible layer:
+`CameraStage` includes:
 
 - white abstract visual field
 - audio-reactive bloom particles
@@ -158,24 +161,39 @@ Implementation files:
 - `src/App.tsx`
 - `src/types.ts`
 
-### E2E test
+### Dormant Legacy Poetry Code
 
-`tests/e2e/cbl.spec.ts` now covers the bowl microphone flow instead of the old sample-player UI.
+These files remain for now:
 
-### Lint
+- `src/poetry/poemClient.ts`
+- `server/app.ts`
+- `server/openaiPoem.ts`
+- `server/validation.ts`
+- `server/*.test.ts`
 
-Known lint failures were fixed during the integration pass.
+They are not connected to the active frontend. Do not expand or document them as current behavior unless the user asks to bring poetry back.
+
+### E2E Test
+
+`tests/e2e/cbl.spec.ts` covers the bowl microphone flow and verifies the canvas is nonblank. It also checks that the active page has no visible `Poem` text.
 
 ## Remaining Risk
 
-The main remaining risk is not TypeScript/test coverage. It is real-world signal quality and visual strength. The detection thresholds in `src/audio/useMicInput.ts` may need tuning with the actual bowl, room, and microphone. The TouchDesigner-inspired visual intensity in `src/components/CameraStage.tsx` may also need tuning after seeing it on the demo laptop/projector.
+The main remaining risk is real-world signal quality and visual strength.
+
+Check this with the real setup:
+
+- Does chakra detection stay stable with the actual bowl?
+- Are the white visual field and bloom particles visible on the projector?
+- Do wrist/body tracking nodes appear clearly when the person moves?
+- Does the stage feel visually impressive without relying on text?
 
 ## Suggested Next Plan
 
 1. Run the app with the real bowl and mic.
 2. Watch whether the detected chakra is stable.
 3. Tune the constants in `src/audio/useMicInput.ts` if needed.
-4. Consider adding a small on-screen chakra readout for demo/explanation.
+4. Tune visual intensity in `src/components/CameraStage.tsx`.
 5. Keep `README.md` and this `docs/` folder updated as the physical demo behavior changes.
 
 ## Verification Commands
@@ -205,6 +223,6 @@ Check:
 
 - camera fallback or camera feed appears
 - microphone button works
-- aura/cymatics are visible when session is active
-- poem generation does not fail from request validation
+- no poem panel/button/text appears
+- aura/cymatics/bloom are visible when session is active
 - no old sample-player UI assumptions remain in tests/docs

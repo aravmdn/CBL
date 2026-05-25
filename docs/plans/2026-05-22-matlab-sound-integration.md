@@ -2,15 +2,19 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Translate the teammate MATLAB sound-analysis idea into the web app so live bowl sound drives chakra detection, cymatics visuals, and poem context.
+> Status update, 2026-05-25: this is now a historical implementation plan. The sound/chakra/cymatics work was integrated, but poetry has since been removed from the active app and kept only as dormant legacy code.
 
-**Architecture:** Keep the existing React/Vite app and canvas stage. Add browser-side FFT/top-frequency/chakra analysis in `useMicInput`, pass that data through `App`, update the canvas cymatics renderer to use real frequencies, and update the server poem API to accept the new bowl meditation request shape.
+**Goal:** Translate the teammate MATLAB sound-analysis idea into the web app so live bowl sound drives chakra detection, cymatics visuals, and, originally, poem context.
+
+**Architecture:** Keep the existing React/Vite app and canvas stage. Add browser-side FFT/top-frequency/chakra analysis in `useMicInput`, pass that data through `App`, and update the canvas cymatics renderer to use real frequencies. The poem API work described below is now legacy, not active product behavior.
 
 **Tech Stack:** React 19, TypeScript, Vite, Web Audio API, Canvas 2D, Express, Vitest, Playwright.
 
 ---
 
-### Task 1: Update Poem API Contract
+### Legacy Task 1: Update Poem API Contract
+
+This task was part of the older poetry direction. Do not use it as current product guidance.
 
 **Files:**
 - Modify: `src/types.ts`
@@ -50,7 +54,7 @@
 1. Pass mic frequency/chakra data into `CameraStage`.
 2. Update cymatics drawing to use `k = frequency / 80`, matching teammate MATLAB logic.
 3. Keep rendering artistic: transparent layer over the camera/aura scene, not a standalone graph.
-4. Pass `mic.dominantChakra` to the poem request.
+4. Historical only: this used to pass `mic.dominantChakra` to the poem request. The active app now passes chakra only to the visual stage.
 
 ### Task 4: Update E2E And Docs
 
@@ -60,7 +64,7 @@
 
 **Steps:**
 1. Replace old sample-player expectations with current bowl-mic UI expectations.
-2. Keep the poem route mocked.
+2. Historical only: the active E2E test no longer mocks the poem route because the UI does not call it.
 3. Verify the canvas is nonblank.
 4. Update current-status docs after implementation.
 

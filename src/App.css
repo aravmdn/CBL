@@ -1,19 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap');
 
 :root {
-  --aura-calm:       #9B59B6;
-  --aura-relax:      #32C4E3;
-  --aura-neutral:    #FFB347;
-  --aura-active:     #FF6B35;
-  --scrim-bg:        rgba(5, 5, 20, 0.42);
-  --text-warm-white: #FFF8F0;
-  --poem-glow:       rgba(177, 121, 210, 0.85);
-  --ease-gentle:     cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ease-exhale:     cubic-bezier(0.16, 1, 0.3, 1);
-  --font-poem:       'Cormorant Garamond', Georgia, serif;
+  --aura-calm: #9b59b6;
+  --aura-relax: #32c4e3;
+  --aura-neutral: #ffb347;
+  --aura-active: #ff6b35;
+  --scrim-bg: rgba(5, 5, 20, 0.42);
+  --text-warm-white: #fff8f0;
+  --accent-glow: rgba(177, 121, 210, 0.85);
+  --ease-gentle: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
 
-  color: #FFF8F0;
-  background: #06060C;
+  color: var(--text-warm-white);
+  background: #06060c;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -29,7 +28,7 @@ body {
   min-width: 320px;
   min-height: 100dvh;
   overflow: hidden;
-  background: #06060C;
+  background: #06060c;
 }
 
 button,
@@ -43,59 +42,43 @@ button {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 126px minmax(0, 1fr) 236px;
+  grid-template-columns: 126px minmax(0, 1fr);
   align-items: center;
   min-height: 100dvh;
-  background: #06060C;
+  background: #06060c;
 }
 
-/* ── Controls auto-hide ───────────────────────────────────── */
-.control-rail,
-.poem-panel {
+.control-rail {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  width: 96px;
+  min-height: auto;
+  margin-left: 16px;
+  padding: 14px 12px;
   border: 1px solid rgba(177, 121, 210, 0.3);
+  border-radius: 28px;
   background: var(--scrim-bg);
   color: var(--text-warm-white);
   backdrop-filter: blur(8px) saturate(120%);
   box-shadow:
     0 0 0 1px rgba(177, 121, 210, 0.08) inset,
     0 20px 70px rgba(0, 0, 0, 0.48);
-  font-family: var(--font-poem);
+  font-family: var(--font-display);
   opacity: 1;
   transition: opacity 1200ms var(--ease-gentle);
 }
 
-.control-rail.hidden,
-.poem-panel.hidden {
+.control-rail.hidden {
   opacity: 0;
   pointer-events: none;
 }
 
-.control-rail {
-  width: 96px;
-  min-height: auto;
-  margin-left: 16px;
-  padding: 14px 12px;
-  border-radius: 28px;
-  gap: 14px;
-}
-
-.poem-panel {
-  align-self: center;
-  width: 218px;
-  height: min(62vh, 620px);
-  min-height: 420px;
-  margin-right: 16px;
-  border-radius: 24px;
-  overflow: hidden;
-}
-
 .brand {
   padding: 2px 0 0;
-  font-family: var(--font-poem);
+  font-family: var(--font-display);
   font-size: 19px;
   font-weight: 400;
   line-height: 1;
@@ -104,80 +87,45 @@ button {
   color: var(--text-warm-white);
 }
 
-.rail-section {
-  padding: 28px 22px;
-  border-bottom: 1px solid rgba(177, 121, 210, 0.14);
-}
-
-.rail-section h2,
-.poem-panel h2 {
+.mic-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 0 18px;
-  font-size: 18px;
-  font-weight: 400;
-  font-family: var(--font-poem);
-  line-height: 1.2;
-  letter-spacing: 0.04em;
-}
-
-.select-button,
-.generate-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
-  min-height: 42px;
-  padding: 0 14px;
+  padding: 6px 10px;
   border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 8px;
-  background: var(--scrim-bg);
-  color: var(--text-warm-white);
-}
-
-.generate-button {
-  justify-content: center;
-  gap: 10px;
-  border-color: rgba(50, 196, 227, 0.34);
-  background: rgba(50, 196, 227, 0.06);
-}
-
-.static-control {
-  cursor: default;
-}
-
-.generate-button:disabled {
-  opacity: 0.72;
-}
-
-.poem-actions button {
-  display: inline-grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border: 1px solid rgba(177, 121, 210, 0.3);
-  border-radius: 50%;
-  background: var(--scrim-bg);
-  color: var(--text-warm-white);
+  background: transparent;
+  color: rgba(255, 248, 240, 0.55);
   cursor: pointer;
   transition:
-    background-color 180ms var(--ease-gentle),
-    color 180ms var(--ease-gentle);
+    color 180ms var(--ease-gentle),
+    border-color 180ms var(--ease-gentle),
+    background-color 180ms var(--ease-gentle);
 }
 
-.poem-actions button:hover {
-  background: rgba(177, 121, 210, 0.18);
-  color: #fff;
+.mic-button:hover {
+  color: var(--text-warm-white);
+  border-color: rgba(177, 121, 210, 0.6);
 }
 
-.heartbeat-display {
+.mic-button.active {
+  color: var(--aura-calm);
+  border-color: var(--aura-calm);
+  background: rgba(155, 89, 182, 0.12);
+}
+
+.heartbeat-display,
+.signal-display {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 6px 0;
   color: rgba(255, 248, 240, 0.82);
+}
+
+.heartbeat-display {
+  padding: 6px 0;
   transition: color 80ms ease;
 }
 
@@ -195,108 +143,49 @@ button {
 }
 
 .bpm-value {
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
   line-height: 1;
-  font-family: var(--font-poem);
 }
 
 .trend-label {
   margin: 0;
   color: rgba(255, 248, 240, 0.42);
+  font-family: var(--font-display);
   font-size: 10px;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-family: var(--font-poem);
 }
 
-.generate-poem-button {
-  display: inline-grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border: 1px solid rgba(177, 121, 210, 0.3);
-  border-radius: 50%;
-  background: var(--scrim-bg);
-  color: var(--text-warm-white);
-  cursor: pointer;
-  transition:
-    background-color 180ms var(--ease-gentle),
-    box-shadow 180ms var(--ease-gentle);
-}
-
-.generate-poem-button:hover {
-  background: rgba(177, 121, 210, 0.16);
-  box-shadow: 0 0 16px rgba(177, 121, 210, 0.35);
-}
-
-.generate-poem-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.mic-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid rgba(177, 121, 210, 0.3);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  color: rgba(255, 248, 240, 0.55);
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
-  width: 100%;
-}
-
-.mic-button:hover {
-  color: var(--text-warm-white);
-  border-color: rgba(177, 121, 210, 0.6);
-}
-
-.mic-button.active {
-  color: var(--aura-calm);
-  border-color: var(--aura-calm);
-  background: rgba(155, 89, 182, 0.12);
-}
-
-.micro-label {
-  margin: 0;
-  color: rgba(255, 248, 240, 0.58);
-  font-size: 11px;
-  line-height: 1.25;
-  text-align: center;
-  font-family: var(--font-poem);
-}
-
-.mini-bars {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.signal-display {
   min-height: 34px;
+  padding: 6px 4px;
+  border: 1px solid rgba(177, 121, 210, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(255, 248, 240, 0.72);
+  font-family: var(--font-display);
+  font-size: 11px;
+  line-height: 1;
 }
 
-.mini-bars span {
-  width: 5px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--aura-calm), var(--aura-relax));
+.signal-display svg {
+  flex-shrink: 0;
+  color: rgba(184, 255, 243, 0.72);
 }
 
-.tip {
-  margin: auto 22px 24px;
-  color: rgba(255, 248, 240, 0.66);
-  font-size: 13px;
-  font-style: italic;
-  line-height: 1.45;
-  font-family: var(--font-poem);
+.signal-display span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rail-icons {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 22px 22px;
+.signal-display.quiet {
+  color: rgba(255, 248, 240, 0.5);
 }
 
 .stage {
@@ -326,16 +215,20 @@ button {
   pointer-events: none;
   content: "";
   background:
-    linear-gradient(90deg, rgba(6, 6, 12, 0.55), transparent 18%, transparent 74%, rgba(6, 6, 12, 0.44)),
-    radial-gradient(circle at 52% 46%, transparent 0, transparent 38%, rgba(0, 0, 0, 0.24) 100%);
+    linear-gradient(90deg, rgba(6, 6, 12, 0.55), transparent 18%, transparent 78%, rgba(6, 6, 12, 0.3)),
+    radial-gradient(circle at 52% 46%, transparent 0, transparent 40%, rgba(0, 0, 0, 0.24) 100%);
 }
 
-.stage-status,
-.listening-pill {
+.stage-status {
+  position: absolute;
+  z-index: 1;
+  bottom: 42px;
+  left: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  min-width: 170px;
   min-height: 52px;
   border: 1px solid rgba(177, 121, 210, 0.3);
   border-radius: 999px;
@@ -343,15 +236,7 @@ button {
   color: var(--text-warm-white);
   backdrop-filter: blur(8px);
   box-shadow: 0 0 24px rgba(177, 121, 210, 0.12);
-  font-family: var(--font-poem);
-}
-
-.stage-status {
-  position: absolute;
-  z-index: 1;
-  left: 50%;
-  bottom: 42px;
-  min-width: 170px;
+  font-family: var(--font-display);
   transform: translateX(-50%);
 }
 
@@ -368,113 +253,6 @@ button {
   background: var(--aura-calm);
   box-shadow: 0 0 14px rgba(155, 89, 182, 0.9);
   animation: pulse 1.2s ease-in-out infinite;
-}
-
-.poem-panel header {
-  padding: 18px 18px 0;
-}
-
-.poem-panel header h2 {
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(177, 121, 210, 0.2);
-  font-size: 15px;
-}
-
-.poem-actions {
-  display: flex;
-  gap: 8px;
-  margin: 14px 0 18px;
-}
-
-.poem-actions button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(177, 121, 210, 0.3);
-  background: var(--scrim-bg);
-}
-
-.error-message {
-  margin: 0 18px 12px;
-  padding: 10px;
-  border: 1px solid rgba(177, 121, 210, 0.28);
-  border-radius: 8px;
-  background: rgba(155, 89, 182, 0.08);
-  color: var(--text-warm-white);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.copy-status {
-  margin: 0 18px 12px;
-  color: rgba(255, 248, 240, 0.72);
-  font-size: 12px;
-  font-family: var(--font-poem);
-}
-
-.copy-status.error {
-  color: var(--text-warm-white);
-}
-
-.poem-lines {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 12px;
-  margin: 0 18px;
-  padding: 0 4px 8px 0;
-  overflow: auto;
-  list-style: none;
-}
-
-.poem-lines li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 10px 1fr;
-  gap: 10px;
-  min-height: 24px;
-}
-
-.poem-lines li::before {
-  position: absolute;
-  top: 13px;
-  bottom: -17px;
-  left: 3px;
-  width: 1px;
-  content: "";
-  background: rgba(177, 121, 210, 0.2);
-}
-
-.poem-lines li:last-child::before {
-  display: none;
-}
-
-.timeline-dot {
-  width: 6px;
-  height: 6px;
-  margin-top: 8px;
-  border-radius: 50%;
-  background: rgba(255, 248, 240, 0.55);
-}
-
-.poem-lines li:first-child .timeline-dot {
-  background: var(--aura-calm);
-  box-shadow: 0 0 10px rgba(155, 89, 182, 0.8);
-}
-
-.poem-lines p {
-  margin: 0;
-  color: rgba(255, 248, 240, 0.84);
-  font-size: 13px;
-  font-family: var(--font-poem);
-  font-weight: 300;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-}
-
-.listening-pill {
-  min-height: 40px;
-  margin: 12px 18px 18px;
-  font-size: 13px;
 }
 
 @keyframes pulse {
@@ -505,37 +283,30 @@ button {
     right: auto;
     bottom: 14px;
     left: 50%;
-    width: min(88vw, 360px);
+    width: min(88vw, 390px);
     min-height: auto;
     margin: 0;
     padding: 10px 12px;
-    transform: translateX(-50%);
     border-radius: 999px;
     flex-direction: row;
     align-items: center;
+    transform: translateX(-50%);
   }
 
   .brand,
-  .micro-label,
-  .volume-row {
+  .trend-label {
     display: none;
+  }
+
+  .signal-display {
+    flex: 1 1 0;
+    min-width: 64px;
   }
 
   .stage,
   .effects-canvas {
     min-height: 100dvh;
     height: 100dvh;
-  }
-
-  .poem-panel {
-    position: fixed;
-    top: 14px;
-    right: 14px;
-    width: 210px;
-    height: min(50vh, 430px);
-    min-height: 320px;
-    margin: 0;
-    border-radius: 22px;
   }
 }
 
@@ -544,24 +315,11 @@ button {
     width: calc(100vw - 24px);
   }
 
-  .poem-panel {
-    right: 12px;
-    left: 12px;
-    width: auto;
-    height: 34vh;
-    min-height: 260px;
+  .signal-display.quiet {
+    display: none;
   }
 
-  .poem-panel header,
-  .poem-lines,
-  .listening-pill,
-  .error-message {
-    margin-right: 14px;
-    margin-left: 14px;
-  }
-
-  .poem-panel header {
-    padding-right: 14px;
-    padding-left: 14px;
+  .stage-status {
+    bottom: 92px;
   }
 }

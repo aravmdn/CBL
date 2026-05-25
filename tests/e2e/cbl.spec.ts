@@ -1,17 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('starts the bowl session, generates poetry, and renders a nonblank canvas', async ({ page }) => {
-  await page.route('**/api/poem', async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({
-        lines: ['first light', 'finds the room', 'under your breath', 'the sample turns', 'into weather'],
-        moodWords: ['soft', 'bright'],
-        palette: { primary: '#8ee8ff', accent: '#f4c979' },
-      }),
-    })
-  })
-
+test('starts the bowl session and renders a nonblank visual stage', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByText('CBL')).toBeVisible()
   const controls = page.getByRole('complementary', { name: 'Controls' })
@@ -21,12 +10,10 @@ test('starts the bowl session, generates poetry, and renders a nonblank canvas',
   await expect(micButton).toBeVisible()
 
   await micButton.click()
-  await expect(page.getByText('Bowl session active')).toBeVisible()
-  await page.mouse.move(24, 24)
-  await expect(controls).not.toHaveClass(/hidden/)
-  await controls.getByRole('button', { name: 'Generate poem', exact: true }).click()
-  await expect(page.getByText('first light')).toBeVisible()
-  await expect(page.getByText('Poem ready')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Stop bowl microphone' })).toBeVisible()
+  await expect(page.locator('[aria-label^="Detected signal:"]')).toBeVisible()
+  await expect(page.locator('[aria-label^="Dominant frequency:"]')).toBeVisible()
+  await expect(page.getByText('Poem')).toHaveCount(0)
 
   const canvasBox = await page.getByTestId('effects-canvas').boundingBox()
   expect(canvasBox?.width).toBeGreaterThan(300)

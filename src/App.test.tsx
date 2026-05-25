@@ -6,18 +6,30 @@ import App from './App'
 class FakeAudioContext {
   state = 'running'
   destination = {}
+  sampleRate = 44_100
 
   async resume() {
     this.state = 'running'
   }
 
+  async close() {
+    this.state = 'closed'
+  }
+
   createAnalyser() {
     return {
-      fftSize: 128,
-      frequencyBinCount: 64,
+      fftSize: 2048,
+      frequencyBinCount: 1024,
+      maxDecibels: -20,
+      minDecibels: -90,
       smoothingTimeConstant: 0.84,
       connect: vi.fn(),
-      getByteFrequencyData: (data: Uint8Array) => data.fill(64),
+      getFloatFrequencyData: (data: Float32Array) => {
+        data.fill(-90)
+        data[24] = -28
+        data[25] = -24
+        data[26] = -29
+      },
     }
   }
 
@@ -26,12 +38,11 @@ class FakeAudioContext {
   }
 }
 
+const track = { stop: vi.fn() }
 const stream = {
   getVideoTracks: () => [{ label: 'HD Pro Webcam C920' }],
-  getTracks: () => [{ stop: vi.fn() }],
+  getTracks: () => [track],
 }
-
-let writeClipboardText = vi.fn(async () => undefined)
 
 function installCanvasMock() {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
@@ -41,6 +52,11 @@ function installCanvasMock() {
     beginPath: vi.fn(),
     clearRect: vi.fn(),
     closePath: vi.fn(),
+    createImageData: (width: number, height: number) => ({
+      data: new Uint8ClampedArray(width * height * 4),
+      height,
+      width,
+    }),
     createLinearGradient: () => ({ addColorStop: vi.fn() }),
     createRadialGradient: () => ({ addColorStop: vi.fn() }),
     drawImage: vi.fn(),
@@ -50,6 +66,7 @@ function installCanvasMock() {
     fillText: vi.fn(),
     lineTo: vi.fn(),
     moveTo: vi.fn(),
+    putImageData: vi.fn(),
     quadraticCurveTo: vi.fn(),
     restore: vi.fn(),
     save: vi.fn(),
@@ -60,37 +77,28 @@ function installCanvasMock() {
 }
 
 beforeEach(() => {
-  writeClipboardText = vi.fn(async () => undefined)
   vi.stubGlobal('AudioContext', FakeAudioContext)
   vi.stubGlobal('webkitAudioContext', FakeAudioContext)
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-    const url = String(input)
-    if (url === '/api/poem') {
-      return new Response(
-        JSON.stringify({
-          lines: ['first light', 'finds the room', 'under your breath', 'the sample turns', 'into weather'],
-          moodWords: ['soft', 'bright'],
-          palette: { primary: '#8ee8ff', accent: '#f4c979' },
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      )
-    }
-
-    return new Response(new ArrayBuffer(8), { status: 200 })
-  }))
+  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
   vi.stubGlobal('navigator', {
     ...navigator,
     mediaDevices: {
       getUserMedia: vi.fn(async () => stream),
-    },
-    clipboard: {
-      writeText: writeClipboardText,
     },
   })
   Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', {
     configurable: true,
     value: null,
     writable: true,
+  })
+  Object.defineProperty(HTMLMediaElement.prototype, 'videoWidth', {
+    configurable: true,
+    value: 0,
+  })
+  Object.defineProperty(HTMLMediaElement.prototype, 'videoHeight', {
+    configurable: true,
+    value: 0,
   })
   HTMLMediaElement.prototype.play = vi.fn(async () => undefined)
   installCanvasMock()
@@ -102,21 +110,36 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('renders the minimal shell and poem panel', () => {
+  it('renders the visual installation shell without active poetry controls', () => {
     render(<App />)
 
     expect(screen.getByText('CBL')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start bowl microphone' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Regenerate poem' })).toBeInTheDocument()
-    expect(screen.getByText('Poem')).toBeInTheDocument()
+    expect(screen.getByLabelText('Camera visual effects stage')).toBeInTheDocument()
+    expect(screen.queryByText('Poem')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /poem/i })).not.toBeInTheDocument()
+  })
+
+  it('starts the bowl microphone and shows signal status', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Start bowl microphone' }))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Stop bowl microphone' })).toBeInTheDocument())
+    expect(screen.getByLabelText(/Detected signal:/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Dominant frequency:/)).toBeInTheDocument()
   })
 
   it('shows a denied camera state without crashing', async () => {
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
       value: {
-        getUserMedia: vi.fn(async () => {
-          throw new Error('denied')
+        getUserMedia: vi.fn(async (constraints: MediaStreamConstraints) => {
+          if (constraints.video) {
+            throw new Error('denied')
+          }
+          return stream
         }),
       },
     })
@@ -124,46 +147,5 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => expect(screen.getByText('Camera fallback')).toBeInTheDocument())
-  })
-
-  it('generates and displays a poem from the API', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(screen.getByRole('button', { name: 'Regenerate poem' }))
-
-    await waitFor(() => expect(screen.getByText('first light')).toBeInTheDocument())
-    expect(screen.getByText('Poem ready')).toBeInTheDocument()
-  })
-
-  it('copies the current poem to the clipboard', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(screen.getByRole('button', { name: 'Copy poem' }))
-
-    await expect(navigator.clipboard.readText()).resolves.toContain('the bowl rings')
-    expect(screen.getByRole('status')).toHaveTextContent('Copied')
-  })
-
-  it('renders a clear API error state', async () => {
-    vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url === '/api/poem') {
-        return new Response(JSON.stringify({ error: 'OPENROUTER_API_KEY or OPENAI_API_KEY is not set.' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
-
-      return new Response(new ArrayBuffer(8), { status: 200 })
-    })
-
-    const user = userEvent.setup()
-    render(<App />)
-    await user.click(screen.getByRole('button', { name: 'Regenerate poem' }))
-
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('OPENROUTER_API_KEY'))
-    expect(screen.getByText('Needs API key')).toBeInTheDocument()
   })
 })

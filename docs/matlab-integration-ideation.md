@@ -43,11 +43,11 @@ The camera part is already covered in the web app. The most useful pieces to int
 
 Current web app:
 
-- Uses the microphone for basic visual bars.
-- Has an artistic cymatics layer.
+- Uses the microphone for live visual control.
+- Has an artistic cymatics layer driven by detected frequencies.
 - Has chakra types in `audioAnalysis.ts`.
-- Does not yet use real strongest bowl frequencies to drive the cymatics.
-- Does not yet pass live chakra into the poem request.
+- Uses real strongest bowl frequencies to drive the cymatics.
+- No longer uses poetry in the active demo.
 
 Teammate MATLAB:
 
@@ -65,10 +65,11 @@ This direction has now been implemented in the first integration pass.
 
 That means:
 
-- Keep the current aura/camera/poem scene.
+- Keep the current aura/camera/visual scene.
 - Use the teammate's sound logic underneath it.
 - Make the result visually polished for the installation.
 - Do not show a plain square MATLAB-style graph unless needed for debugging.
+- Keep poetry dormant unless the group explicitly decides to bring it back.
 
 ## What Would Change In Logic
 
@@ -87,7 +88,7 @@ bowl sound
 -> strongest 8 frequencies
 -> nearest chakra color
 -> cymatics pattern
--> aura tint and poem context
+-> aura tint and TouchDesigner-style visual response
 ```
 
 The teammate's main cymatics formula is:
@@ -109,7 +110,7 @@ Visual changes:
 - The pattern becomes more intense when the bowl sound is stronger.
 - The color changes based on the closest chakra frequency.
 - The aura can gently tint toward that chakra color.
-- The poem can respond to the detected chakra.
+- Bloom particles and tracking nodes can react to the sound and body.
 
 Example:
 
@@ -118,7 +119,7 @@ If the bowl sound is closest to 639 Hz:
 -> the app detects Heart
 -> cymatics become green-ish
 -> aura can pick up green highlights
--> poem can reference openness, breath, or calm
+-> bloom and tracking visuals can become stronger or greener
 ```
 
 ## Exact Integration Points
@@ -146,29 +147,18 @@ This is where `cymatics_pattern.m` should be translated into canvas rendering.
 The live chakra from the microphone is now passed into:
 
 - the canvas stage
-- the poem request
 
 `App` now uses the real value from `useMicInput`.
 
-### `server/validation.ts` and `server/openaiPoem.ts`
+### Dormant Legacy Poem Files
 
-The poem API now understands the new bowl meditation payload:
+These files still exist, but are not part of the active demo:
 
-```json
-{
-  "session": "bowl-meditation",
-  "heartbeat": {
-    "bpm": 68,
-    "trend": "calming",
-    "variability": 0.4,
-    "dominantChakra": {
-      "name": "Heart",
-      "frequency": 639,
-      "color": "#00ff00"
-    }
-  }
-}
-```
+- `src/poetry/poemClient.ts`
+- `server/validation.ts`
+- `server/openaiPoem.ts`
+
+Leave them alone unless the team decides to re-enable poetry.
 
 ## What To Tell The Group
 
@@ -181,7 +171,7 @@ The MATLAB part analyzes the sound. The web app turns that analysis into the liv
 Medium version:
 
 ```text
-Our teammate made a MATLAB prototype that listens to the bowl, finds the strongest frequencies, and chooses the closest chakra color. We can translate that same logic into the web app. Then the bowl sound will control the cymatics pattern, the aura color, and the poem context.
+Our teammate made a MATLAB prototype that listens to the bowl, finds the strongest frequencies, and chooses the closest chakra color. We can translate that same logic into the web app. Then the bowl sound will control the cymatics pattern, the aura color, and the live visual response.
 ```
 
 Visual explanation:
@@ -190,7 +180,7 @@ Visual explanation:
 Heartbeat = pulse of the aura
 Bowl sound = shape and color of the cymatics
 Camera = places the aura around the person
-Poem = describes the body and sound state
+TouchDesigner-style layer = makes the response feel alive
 ```
 
 ## Why Artistic Integration Is Better Than A Direct Copy
@@ -201,7 +191,7 @@ An artistic version still uses the real sound logic, but makes it fit the instal
 
 - the pattern sits over the camera image
 - the colors blend into the aura
-- the poem and visuals feel like one scene
+- the bloom particles and tracking nodes feel like one scene
 - the teammate's work is still present because the real sound controls the result
 
 This is likely the strongest direction for the final presentation because it is both explainable and visually engaging.

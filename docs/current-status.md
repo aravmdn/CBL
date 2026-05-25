@@ -5,8 +5,7 @@ Date: 2026-05-25
 ## Repository State
 
 - Branch: `main`
-- Last base commit before this integration: `c82ddb7 perf(canvas): smooth aura, float poem around person, fix frame churn`
-- This note describes the current web app after the MATLAB sound integration and TouchDesigner-inspired visual pass.
+- This note describes the current web app after the MATLAB sound integration, TouchDesigner-inspired visual pass, and poetry-removal pivot.
 - Untracked project material exists and should not be deleted without asking:
   - `EngineeringArt CBL/`
   - `EngineeringArt CBL.zip`
@@ -14,6 +13,18 @@ Date: 2026-05-25
   - `tmp/`
 
 The `EngineeringArt CBL/` folder and zip are teammate work. They contain MATLAB files for microphone FFT, cymatics, camera input, and chakra color mapping.
+
+## Latest Direction Update
+
+Poetry is no longer an active part of the demo.
+
+The current project focus is:
+
+```text
+design quality + TouchDesigner-style visuals + bowl sound + body tracking
+```
+
+Old poem-related code can stay as dormant legacy code for now, but new UI work should not build around poems.
 
 ## What The App Does Now
 
@@ -32,35 +43,39 @@ Current experience:
 - A TouchDesigner-inspired layer adds white visual lines, bloom particles, and visible tracking nodes.
 - Wrist tracking is exposed from MediaPipe and used for hand/body node visuals.
 - The stage status can show detected chakra and approximate frequency.
-- Poem generation sends heartbeat plus detected chakra context.
-- Poem lines float around the person.
-- A seed poem is available when no AI call succeeds.
+- The UI has no active poem panel, poem button, or poem overlay.
 
-The visual direction has moved away from the older sample-audio prototype and toward a Tibetan singing bowl / heartbeat / cymatics concept.
+The visual direction has moved away from the older sample-audio/text prototype and toward a Tibetan singing bowl / heartbeat / cymatics visual installation.
 
 ## Important Files
 
-- `src/App.tsx`: main UI state, mic toggle, heartbeat state, poem panel.
-- `src/audio/useMicInput.ts`: browser microphone capture and frequency bars.
+- `src/App.tsx`: main UI state, mic toggle, heartbeat state, signal readouts.
+- `src/audio/useMicInput.ts`: browser microphone capture, frequency peaks, and chakra detection.
 - `src/audio/useHeartbeat.ts`: simulated heartbeat; later replace with Arduino/Web Serial input.
 - `src/audio/audioAnalysis.ts`: audio feature extraction and chakra frequency constants.
 - `src/camera/usePoseTracking.ts`: camera pose tracking, including wrist anchors.
-- `src/components/CameraStage.tsx`: canvas visuals: camera, aura, cymatics, poem text.
-- `src/poetry/poemClient.ts`: frontend poem request.
-- `server/validation.ts`: server-side poem request validation.
-- `server/openaiPoem.ts`: OpenRouter/OpenAI poem generation.
+- `src/components/CameraStage.tsx`: canvas visuals: camera, aura, cymatics, bloom particles, tracking nodes.
+- `src/poetry/poemClient.ts`: dormant legacy poem request client.
+- `server/validation.ts`: dormant legacy poem request validation.
+- `server/openaiPoem.ts`: dormant legacy OpenRouter/OpenAI poem generation.
 - `CLAUDE.md`: architecture note for Claude/Codex handoff.
-- `README.md`: current setup, behavior, API contract, and troubleshooting.
+- `README.md`: current setup, behavior, troubleshooting, and legacy code notes.
 
 ## Checks Run
 
-These checks were run on 2026-05-25 after the TouchDesigner reference pass:
+These checks were run on 2026-05-25 after the poetry-removal pivot:
+
+```powershell
+npm run lint
+```
+
+Result: passed.
 
 ```powershell
 npm run test
 ```
 
-Result: passed. 5 test files, 17 tests.
+Result: passed. 5 test files, 15 tests.
 
 ```powershell
 npm run build
@@ -72,45 +87,32 @@ Result: passed.
 npm run test:e2e
 ```
 
-Result: passed. The Playwright test starts the bowl mic flow, reveals the auto-hiding controls, generates a mocked poem, and checks that the canvas is nonblank.
-
-```powershell
-npm run lint
-```
-
-Result: passed.
+Result: passed. The Playwright test starts the bowl mic flow, checks the signal readouts, confirms no active poem text is visible, and verifies the canvas is nonblank.
 
 Browser smoke check:
 
 - Opened `http://127.0.0.1:5173/` with the Browser/Playwright tool.
 - Page title: `cbl`.
-- Main controls, camera stage, and poem panel rendered.
 - Console errors: 0.
 - Console warnings: 2 MediaPipe/OpenGL diagnostics during local dev rendering.
 
-## Known Gaps
+## Current Implementation Notes
 
-### 1. Poem API Contract Has Been Updated
+### 1. Active Poetry Was Removed From The UI
 
-The frontend and server now use:
+`src/App.tsx` no longer imports or calls `requestPoem`.
 
-```json
-{
-  "session": "bowl-meditation",
-  "heartbeat": {
-    "bpm": 72,
-    "trend": "stable",
-    "variability": 0.3,
-    "dominantChakra": null
-  }
-}
-```
+Removed from the active screen:
 
-The server validates this shape and the poem prompt uses BPM, trend, variability, and chakra.
+- poem panel
+- regenerate poem button
+- copy poem button
+- poem generation status
+- floating poem text on the canvas
 
 ### 2. Chakra Is Wired Through Live Mic
 
-`useMicInput` now exposes:
+`useMicInput` exposes:
 
 ```text
 frequencyPeaks
@@ -118,12 +120,9 @@ dominantFrequency
 dominantChakra
 ```
 
-`App` passes `dominantChakra` to:
+`App` passes those values to `CameraStage` and displays compact signal/frequency readouts in the control rail.
 
-- `requestPoem(...)`
-- `CameraStage`
-
-### 3. Cymatics Now Use The MATLAB Input Logic
+### 3. Cymatics Use The MATLAB Input Logic
 
 `CameraStage` still renders an artistic layer, but its shape now comes from real frequency peaks.
 
@@ -134,11 +133,7 @@ k = frequency / 80
 pattern += magnitude * sin(k * X) * sin(k * Y)
 ```
 
-### 4. Remaining Practical Risk
-
-The integration is validated with automated tests, but the frequency thresholds still need real-room testing with the actual bowl and microphone.
-
-### 5. TouchDesigner Reference Pass
+### 4. TouchDesigner Reference Pass
 
 Reference:
 
@@ -157,6 +152,10 @@ Implemented:
 - chakra/frequency status text
 
 Full details: `docs/touchdesigner-reference.md`.
+
+### 5. Remaining Practical Risk
+
+The integration is covered by automated tests, but the frequency thresholds and visual strength still need real-room testing with the actual bowl, microphone, camera, and projector.
 
 ## Recommended Next Development Order
 
