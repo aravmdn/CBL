@@ -93,6 +93,42 @@ Write a GLSL TOP that generates a cymatics-style sin(kx)*sin(ky) pattern
 | Component not loaded | Confirm TOX is in the project; check textport for Python errors |
 | Wrong parameter name error | Run `op.TDAPI.GetParameterList('operatorType')` to discover actual names |
 | Stale error after fix | Check errors in a **separate** `td_execute` call — TD caches errors at frame boundaries |
+| MCP calls suddenly all "fetch failed", TD window still responsive | TD's main thread is wedged. Usual cause on this machine: TD touched the **audio device** (creating an `audiodeviceinCHOP`, or `project.save()` enumerating audio devices). TD must be killed and relaunched. Avoid live audio-device ops in saved files here — see below. |
+| `project.save('x.toe')` returns `False`, file unchanged | The non-interactive API auto-declines the "overwrite existing file?" prompt. Delete the file first (or save to a new name), then save. |
+
+## Launching from a saved project (no manual TOX drag)
+
+You no longer have to drag the TOX in by hand. The repo ships a ready project at
+`td/cbl.toe` that already contains the `TouchDesignerAPI` component on port 44444.
+Just launch it:
+
+```powershell
+& "C:\Program Files\Derivative\TouchDesigner\bin\TouchDesigner.exe" "C:\projects\CBL\td\cbl.toe"
+```
+
+Wait ~15–60s, then poll until the API answers:
+
+```powershell
+Get-NetTCPConnection -LocalPort 44444 -State Listen   # socket up
+# then confirm the server actually responds (not just the socket):
+```
+…and verify with an MCP `td_execute` like `print(project.name)`. A listening
+socket alone is not enough — a wedged TD keeps the socket open but never replies.
+
+## Two wedge causes learned while building `td/cbl.toe`
+
+1. **Audio device hangs TD on this machine.** Both creating an `audiodeviceinCHOP`
+   and `project.save()` (which enumerates audio devices) intermittently freeze
+   TD's main thread — the UI stays alive (`Responding=True`) but HTTP/MCP times
+   out and never recovers. Fix in the build: keep the bowl-mic chain OUT of the
+   saved file; the chakra-detection `scriptCHOP` works input-free with safe
+   defaults, and `td/enable_bowl_audio.py` adds the live mic on the demo laptop.
+2. **Save-overwrite is silently declined.** See the troubleshooting row above —
+   delete-then-save is the reliable pattern via MCP.
+
+When recovering from a wedge: kill the process (`Stop-Process -Id <pid> -Force`),
+relaunch `td/cbl.toe`, and continue — the network is reproducible from the saved
+file, so nothing built before the last good save is lost.
 
 ## Key Coding Rules (for Claude when using this plugin)
 

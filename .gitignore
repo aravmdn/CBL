@@ -18,6 +18,15 @@ playwright-report
 !.env.example
 *.local
 
+# Scratch / working dir
+tmp/
+
+# TouchDesigner auto-increment backups + crash folders (keep only td/cbl.toe)
+td/*.[0-9]*.toe
+td/Backup/
+*.toe-shm
+*.toe-wal
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
