@@ -22,7 +22,9 @@ test('starts the bowl session, generates poetry, and renders a nonblank canvas',
 
   await micButton.click()
   await expect(page.getByText('Bowl session active')).toBeVisible()
-  await page.getByRole('button', { name: 'Regenerate poem' }).click()
+  await page.mouse.move(24, 24)
+  await expect(controls).not.toHaveClass(/hidden/)
+  await controls.getByRole('button', { name: 'Generate poem', exact: true }).click()
   await expect(page.getByText('first light')).toBeVisible()
   await expect(page.getByText('Poem ready')).toBeVisible()
 

@@ -1,6 +1,6 @@
 # CBL Project Notes
 
-Date: 2026-05-22
+Date: 2026-05-25
 
 This folder is a handoff/reference area for the CBL web app. It exists so the project can be resumed by the team, Codex, Claude, or another assistant without needing the full chat history.
 
@@ -8,6 +8,7 @@ This folder is a handoff/reference area for the CBL web app. It exists so the pr
 
 - [Current status](./current-status.md): what the app does now, what is broken, and what checks were run.
 - [MATLAB integration ideation](./matlab-integration-ideation.md): how the teammate MATLAB work can be brought into the web app.
+- [TouchDesigner reference handoff](./touchdesigner-reference.md): TikTok source link, visual goal, and implemented white/audio/hand-tracking pass.
 - [AI handoff](./ai-handoff.md): concise context for Claude/Codex before making future changes.
 
 ## One Sentence Project Summary
@@ -22,4 +23,10 @@ The first integration pass is now implemented:
 bowl sound -> browser mic -> strongest frequencies -> nearest chakra -> cymatics color/pattern -> poem context
 ```
 
-Next, test it with a real bowl/microphone and tune the frequency thresholds if the detected chakra jumps too much.
+The TouchDesigner-inspired pass is also implemented:
+
+```text
+TikTok visual reference -> white visual field -> audio bloom particles -> wrist/body tracking nodes
+```
+
+Next, test with the real bowl, mic, and camera in the demo room. Tune the frequency thresholds and visual intensity if the result is too subtle or too jumpy.

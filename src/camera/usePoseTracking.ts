@@ -64,6 +64,8 @@ export function usePoseTracking(videoRef: RefObject<HTMLVideoElement | null>, ca
         const head = landmarks?.[0]
         const leftShoulder = landmarks?.[11]
         const rightShoulder = landmarks?.[12]
+        const leftWrist = landmarks?.[15]
+        const rightWrist = landmarks?.[16]
         const leftHip = landmarks?.[23]
         const rightHip = landmarks?.[24]
         const visibleBodyPoints = [head, leftShoulder, rightShoulder].filter(hasUsefulVisibility)
@@ -79,6 +81,8 @@ export function usePoseTracking(videoRef: RefObject<HTMLVideoElement | null>, ca
             head: head && hasUsefulVisibility(head) ? mirroredAnchor(head) : undefined,
             leftShoulder: mirroredAnchor(leftShoulder),
             rightShoulder: mirroredAnchor(rightShoulder),
+            leftWrist: leftWrist && hasUsefulVisibility(leftWrist) ? mirroredAnchor(leftWrist) : undefined,
+            rightWrist: rightWrist && hasUsefulVisibility(rightWrist) ? mirroredAnchor(rightWrist) : undefined,
             torso: { x: 1 - torsoX, y: torsoY, confidence: 0.8 },
           })
           setPersonDetected(true)

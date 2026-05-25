@@ -9,6 +9,8 @@ type CameraStageProps = {
   bpm?: number
   cameraStatus: CameraStatus
   chakraColor?: string
+  chakraName?: string
+  dominantFrequency?: number | null
   frequencyPeaks?: FrequencyPeak[]
   heartbeatPulse?: boolean
   isPlaying: boolean
@@ -109,7 +111,7 @@ class OneEuroFilter {
 }
 
 type AnchorFilter = { x: OneEuroFilter; y: OneEuroFilter }
-const ANCHOR_NAMES: Array<keyof TrackingAnchors> = ['head', 'leftShoulder', 'rightShoulder', 'torso']
+const ANCHOR_NAMES: Array<keyof TrackingAnchors> = ['head', 'leftShoulder', 'rightShoulder', 'leftWrist', 'rightWrist', 'torso']
 
 const getAnchorPoint = (anchors: TrackingAnchors, name: keyof TrackingAnchors, width: number, height: number) => {
   const anchor = anchors[name] ?? anchors.torso ?? anchors.head
@@ -418,14 +420,167 @@ function drawCymaticsPattern(
 
   context.save()
   context.globalCompositeOperation = 'screen'
-  context.globalAlpha = 0.2
+  context.globalAlpha = 0.34
   context.imageSmoothingEnabled = true
   context.drawImage(offscreen, 0, 0, cssWidth, cssHeight)
   context.restore()
 }
 
+function drawWhiteVisualField(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  time: number,
+  energy: number,
+  beatOpacity: number,
+  reduceMotion: boolean,
+) {
+  const motion = reduceMotion ? 0 : time * 0.0007
+  const rows = 18
+  const cols = 24
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.strokeStyle = `rgba(245, 248, 255, ${0.05 + energy * 0.11 + beatOpacity * 0.08})`
+  context.lineWidth = 1
+  context.shadowColor = `rgba(190, 210, 255, ${0.22 + energy * 0.28})`
+  context.shadowBlur = 14
+
+  for (let row = 0; row < rows; row += 1) {
+    context.beginPath()
+    for (let col = 0; col <= cols; col += 1) {
+      const x = (col / cols) * width
+      const yBase = (row / Math.max(1, rows - 1)) * height
+      const ripple =
+        Math.sin(col * 0.55 + row * 0.38 + motion * 2.1) * (10 + energy * 28) +
+        Math.cos(col * 0.21 - row * 0.72 + motion * 1.3) * (5 + beatOpacity * 20)
+      const y = yBase + ripple
+      if (col === 0) context.moveTo(x, y)
+      else context.lineTo(x, y)
+    }
+    context.stroke()
+  }
+
+  context.restore()
+}
+
+function drawAudioBloomParticles(
+  context: CanvasRenderingContext2D,
+  center: { x: number; y: number },
+  width: number,
+  height: number,
+  time: number,
+  bars: number[],
+  frequencyPeaks: FrequencyPeak[],
+  chakraColor: string,
+  energy: number,
+  beatOpacity: number,
+  presence: number,
+  reduceMotion: boolean,
+) {
+  const particleCount = 96
+  const motion = reduceMotion ? 0 : time * 0.001
+  const chakra = getChakraColors(chakraColor)
+  const radiusBase = Math.min(width, height) * (0.12 + energy * 0.28 + beatOpacity * 0.08)
+
+  context.save()
+  context.globalCompositeOperation = 'lighter'
+
+  for (let index = 0; index < particleCount; index += 1) {
+    const peak = frequencyPeaks[index % Math.max(1, frequencyPeaks.length)]
+    const bar = bars[index % Math.max(1, bars.length)] ?? 0.1
+    const magnitude = peak?.magnitude ?? bar
+    const frequencyPhase = peak ? peak.frequency * 0.004 : index * 0.31
+    const angle = index * 2.39996 + motion * (0.35 + magnitude * 0.9) + frequencyPhase
+    const orbit =
+      radiusBase *
+      (0.35 + ((index * 37) % 100) / 110 + magnitude * 1.2 + Math.sin(motion * 1.4 + index) * 0.08)
+    const x = center.x + Math.cos(angle) * orbit * (1.05 + Math.sin(index) * 0.12)
+    const y = center.y + Math.sin(angle * 0.93) * orbit * 0.74
+    const size = 1.4 + magnitude * 8 + beatOpacity * 4
+    const alpha = presence * (0.14 + magnitude * 0.46 + beatOpacity * 0.2)
+
+    const glow = context.createRadialGradient(x, y, 0, x, y, size * 6)
+    glow.addColorStop(0, `rgba(255, 255, 255, ${Math.min(0.9, alpha)})`)
+    glow.addColorStop(0.34, colorWithAlpha(chakra.glow, Math.min(0.42, alpha * 0.55)))
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    context.fillStyle = glow
+    context.beginPath()
+    context.arc(x, y, size * 6, 0, Math.PI * 2)
+    context.fill()
+
+    context.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha + 0.18)})`
+    context.beginPath()
+    context.arc(x, y, Math.max(1.1, size * 0.36), 0, Math.PI * 2)
+    context.fill()
+  }
+
+  context.restore()
+}
+
+function drawTrackingNodes(
+  context: CanvasRenderingContext2D,
+  getPoint: (name: keyof TrackingAnchors) => { x: number; y: number },
+  anchors: TrackingAnchors,
+  energy: number,
+  beatOpacity: number,
+  presence: number,
+) {
+  const nodeNames: Array<keyof TrackingAnchors> = ['leftWrist', 'rightWrist', 'leftShoulder', 'rightShoulder', 'head']
+  const lines: Array<[keyof TrackingAnchors, keyof TrackingAnchors]> = [
+    ['leftShoulder', 'leftWrist'],
+    ['rightShoulder', 'rightWrist'],
+    ['leftShoulder', 'rightShoulder'],
+    ['head', 'leftShoulder'],
+    ['head', 'rightShoulder'],
+  ]
+
+  context.save()
+  context.globalCompositeOperation = 'screen'
+  context.lineWidth = 1.2
+  context.strokeStyle = `rgba(255, 255, 255, ${presence * (0.16 + energy * 0.22)})`
+  context.shadowColor = `rgba(185, 205, 255, ${presence * 0.8})`
+  context.shadowBlur = 14
+
+  for (const [from, to] of lines) {
+    if (!anchors[from] || !anchors[to]) continue
+    const start = getPoint(from)
+    const end = getPoint(to)
+    context.beginPath()
+    context.moveTo(start.x, start.y)
+    context.lineTo(end.x, end.y)
+    context.stroke()
+  }
+
+  for (const name of nodeNames) {
+    if (!anchors[name]) continue
+    const point = getPoint(name)
+    const isWrist = name === 'leftWrist' || name === 'rightWrist'
+    const radius = isWrist ? 8 + energy * 18 + beatOpacity * 10 : 4 + energy * 8
+    const ringRadius = radius * (isWrist ? 2.8 : 2)
+
+    context.strokeStyle = `rgba(255, 255, 255, ${presence * (isWrist ? 0.72 : 0.42)})`
+    context.lineWidth = isWrist ? 1.8 : 1.1
+    context.beginPath()
+    context.arc(point.x, point.y, ringRadius, 0, Math.PI * 2)
+    context.stroke()
+
+    const glow = context.createRadialGradient(point.x, point.y, 0, point.x, point.y, ringRadius * 1.8)
+    glow.addColorStop(0, `rgba(255, 255, 255, ${presence * 0.8})`)
+    glow.addColorStop(0.42, `rgba(185, 205, 255, ${presence * 0.28})`)
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    context.fillStyle = glow
+    context.beginPath()
+    context.arc(point.x, point.y, ringRadius * 1.8, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  context.shadowBlur = 0
+  context.restore()
+}
+
 export function CameraStage(props: CameraStageProps) {
-  const { cameraStatus, isPlaying, personDetected, trackingStatus, heartbeatPulse, videoRef } = props
+  const { cameraStatus, chakraName, dominantFrequency, isPlaying, personDetected, trackingStatus, heartbeatPulse, videoRef } = props
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const lastBeatTimeRef = useRef(0)
@@ -582,6 +737,7 @@ export function CameraStage(props: CameraStageProps) {
       const bpmColor = getBpmColor(bpm)
 
       if (isPlaying && offscreenRef.current) {
+        drawWhiteVisualField(context, cssWidth, cssHeight, time, energy, beatOpacity, reduceMotion)
         drawCymaticsPattern(context, offscreenRef.current, bars, frequencyPeaks, chakraColor, cssWidth, cssHeight)
         drawAuroraCurtain(context, cssWidth, cssHeight, time, energy, beatOpacity, reduceMotion)
       }
@@ -616,6 +772,21 @@ export function CameraStage(props: CameraStageProps) {
           leftShoulder && rightShoulder
             ? (Math.abs(leftShoulder.x - rightShoulder.x) * cssWidth) / 2 + 46
             : cssWidth * 0.13
+        drawAudioBloomParticles(
+          context,
+          poemCenter,
+          cssWidth,
+          cssHeight,
+          time,
+          bars,
+          frequencyPeaks,
+          chakraColor,
+          energy,
+          beatOpacity,
+          presence,
+          reduceMotion,
+        )
+        drawTrackingNodes(context, getPoint, smoothed, energy, beatOpacity, presence)
         drawFloatingPoem(context, poemLines, poemCenter, bodyHalfWidth, cssWidth, cssHeight, time, presence, reduceMotion)
 
         const waveBase = cssHeight - 42
@@ -657,11 +828,13 @@ export function CameraStage(props: CameraStageProps) {
         <span>
           {cameraStatus !== 'granted'
             ? 'Camera fallback'
-            : trackingStatus === 'tracking' && isPlaying
-              ? 'Session active'
-              : trackingStatus === 'tracking'
-                ? 'Person detected'
-                : 'Finding person'}
+            : isPlaying && chakraName
+              ? `${chakraName} ${dominantFrequency ? `${Math.round(dominantFrequency)} Hz` : ''}`.trim()
+              : trackingStatus === 'tracking' && isPlaying
+                ? 'Session active'
+                : trackingStatus === 'tracking'
+                  ? 'Person detected'
+                  : 'Finding person'}
         </span>
       </div>
     </section>

@@ -81,7 +81,7 @@ afterEach(() => {
 })
 
 describe('CameraStage aura effects', () => {
-  it('does not draw poem text or effect strokes before a person is detected', () => {
+  it('draws the audio visual field but no poem text before a person is detected', () => {
     renderStage(false, true)
 
     act(() => {
@@ -89,10 +89,10 @@ describe('CameraStage aura effects', () => {
     })
 
     expect(context.fillText).not.toHaveBeenCalled()
-    expect(context.stroke).not.toHaveBeenCalled()
+    expect(context.stroke).toHaveBeenCalled()
   })
 
-  it('draws body-anchored aura and drifting poem text without line strokes after person detection and playback', () => {
+  it('draws body-anchored aura, tracking lines, bloom, and drifting poem text after person detection and playback', () => {
     renderStage(true, true)
 
     act(() => {
@@ -101,6 +101,6 @@ describe('CameraStage aura effects', () => {
 
     expect(context.fillText).toHaveBeenCalled()
     expect(context.fill).toHaveBeenCalled()
-    expect(context.stroke).not.toHaveBeenCalled()
+    expect(context.stroke).toHaveBeenCalled()
   })
 })

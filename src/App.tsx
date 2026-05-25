@@ -177,6 +177,8 @@ function App() {
         bpm={heartbeat.bpm}
         cameraStatus={camera.status}
         chakraColor={mic.dominantChakra?.color}
+        chakraName={mic.dominantChakra?.name}
+        dominantFrequency={mic.dominantFrequency}
         frequencyPeaks={mic.frequencyPeaks}
         heartbeatPulse={heartbeat.isBeating}
         isPlaying={isSessionActive}

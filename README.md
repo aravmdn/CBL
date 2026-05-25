@@ -21,6 +21,7 @@ Camera frames stay in the browser. The server receives only summarized heartbeat
 - Live FFT analysis that finds the strongest bowl frequencies.
 - Chakra detection using the teammate frequency/color table.
 - Artistic cymatics layer based on the teammate MATLAB formula `k = frequency / 80`.
+- TouchDesigner-inspired white visual field, bloom particles, and tracking-node overlays.
 - Simulated heartbeat with BPM drift, HRV-style variability, and beat pulses.
 - AI poem generation through OpenRouter or OpenAI-compatible configuration.
 - Seed poem fallback for offline/demo use.
@@ -87,6 +88,15 @@ bowl sound
 ```
 
 The current visuals are intentionally artistic, not a direct MATLAB graph. The scientific role of the MATLAB work is still present because the real bowl sound drives the pattern and color.
+
+## TouchDesigner Visual Reference
+
+The current stage also follows ideas from this TikTok reference:
+
+- https://vm.tiktok.com/ZGdHggUDC/
+- resolved: https://www.tiktok.com/@studio.kashi/video/7617655149653167390
+
+The TikTok recommends learning TouchDesigner through white abstract visuals, audio-reactive bloom particles, and hand tracking. This project keeps the React/Vite web-app architecture and translates those ideas into the canvas stage.
 
 ## Prerequisites
 

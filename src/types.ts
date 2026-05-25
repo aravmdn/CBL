@@ -54,6 +54,8 @@ export type TrackingAnchors = {
   head?: TrackingAnchor
   leftShoulder?: TrackingAnchor
   rightShoulder?: TrackingAnchor
+  leftWrist?: TrackingAnchor
+  rightWrist?: TrackingAnchor
   torso?: TrackingAnchor
 }
 

@@ -1,6 +1,6 @@
 # AI Handoff Notes
 
-Date: 2026-05-22
+Date: 2026-05-25
 
 This file is for Claude, Codex, or another coding assistant picking up the CBL project.
 
@@ -8,8 +8,9 @@ This file is for Claude, Codex, or another coding assistant picking up the CBL p
 
 1. `docs/current-status.md`
 2. `docs/matlab-integration-ideation.md`
-3. `CLAUDE.md`
-4. `README.md`
+3. `docs/touchdesigner-reference.md`
+4. `CLAUDE.md`
+5. `README.md`
 
 Important: `README.md` has been updated for the current bowl installation. `CLAUDE.md` is still useful as architecture context, but the current server code is under `server/`.
 
@@ -48,6 +49,51 @@ Useful phrase:
 ```text
 The MATLAB part analyzes the sound. The web app turns that analysis into the live visuals.
 ```
+
+## Recent User Requests And Decisions
+
+### Teammate MATLAB Integration
+
+User request:
+
+```text
+Integrate teammate MATLAB work into the web app.
+```
+
+Decision:
+
+Translate the MATLAB signal-processing idea into browser code, not run MATLAB directly.
+
+Result:
+
+- live mic FFT/top-frequency analysis
+- nearest chakra detection
+- cymatics driven by detected frequencies
+- poem API receives heartbeat plus chakra context
+
+### TouchDesigner TikTok Reference
+
+User request:
+
+```text
+https://vm.tiktok.com/ZGdHggUDC/
+go through this tiktok and follow the tutorial
+```
+
+Reference link:
+
+- https://vm.tiktok.com/ZGdHggUDC/
+- resolved: https://www.tiktok.com/@studio.kashi/video/7617655149653167390
+
+Decision:
+
+The TikTok is a TouchDesigner learning path, not a direct React tutorial. The project stayed a React/Vite app. The useful tutorial ideas were translated into the canvas:
+
+- white abstract visuals
+- audio-reactive bloom particles
+- hand/body tracking nodes
+
+See `docs/touchdesigner-reference.md` for the full handoff.
 
 ## Do Not Accidentally Remove These
 
@@ -96,6 +142,22 @@ dominantChakra
 
 `src/App.tsx` passes chakra data to both `CameraStage` and `requestPoem`.
 
+### TouchDesigner-style visual pass
+
+After reviewing the TikTok reference, `CameraStage` also includes a stronger visible layer:
+
+- white abstract visual field
+- audio-reactive bloom particles
+- wrist/shoulder/head tracking nodes
+- chakra/frequency text in the stage status when detected
+
+Implementation files:
+
+- `src/camera/usePoseTracking.ts`
+- `src/components/CameraStage.tsx`
+- `src/App.tsx`
+- `src/types.ts`
+
 ### E2E test
 
 `tests/e2e/cbl.spec.ts` now covers the bowl microphone flow instead of the old sample-player UI.
@@ -106,7 +168,7 @@ Known lint failures were fixed during the integration pass.
 
 ## Remaining Risk
 
-The main remaining risk is not TypeScript/test coverage. It is real-world signal quality. The detection thresholds in `src/audio/useMicInput.ts` may need tuning with the actual bowl, room, and microphone.
+The main remaining risk is not TypeScript/test coverage. It is real-world signal quality and visual strength. The detection thresholds in `src/audio/useMicInput.ts` may need tuning with the actual bowl, room, and microphone. The TouchDesigner-inspired visual intensity in `src/components/CameraStage.tsx` may also need tuning after seeing it on the demo laptop/projector.
 
 ## Suggested Next Plan
 

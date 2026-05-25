@@ -1,12 +1,12 @@
 # Current Status
 
-Date: 2026-05-22
+Date: 2026-05-25
 
 ## Repository State
 
 - Branch: `main`
 - Last base commit before this integration: `c82ddb7 perf(canvas): smooth aura, float poem around person, fix frame churn`
-- This note now describes the MATLAB sound-integration work that is ready to commit.
+- This note describes the current web app after the MATLAB sound integration and TouchDesigner-inspired visual pass.
 - Untracked project material exists and should not be deleted without asking:
   - `EngineeringArt CBL/`
   - `EngineeringArt CBL.zip`
@@ -29,6 +29,9 @@ Current experience:
 - Browser FFT analysis finds strongest bowl frequencies.
 - The nearest chakra is selected from the teammate frequency/color table.
 - The cymatics layer uses real frequency peaks with the teammate `frequency / 80` pattern logic.
+- A TouchDesigner-inspired layer adds white visual lines, bloom particles, and visible tracking nodes.
+- Wrist tracking is exposed from MediaPipe and used for hand/body node visuals.
+- The stage status can show detected chakra and approximate frequency.
 - Poem generation sends heartbeat plus detected chakra context.
 - Poem lines float around the person.
 - A seed poem is available when no AI call succeeds.
@@ -41,6 +44,7 @@ The visual direction has moved away from the older sample-audio prototype and to
 - `src/audio/useMicInput.ts`: browser microphone capture and frequency bars.
 - `src/audio/useHeartbeat.ts`: simulated heartbeat; later replace with Arduino/Web Serial input.
 - `src/audio/audioAnalysis.ts`: audio feature extraction and chakra frequency constants.
+- `src/camera/usePoseTracking.ts`: camera pose tracking, including wrist anchors.
 - `src/components/CameraStage.tsx`: canvas visuals: camera, aura, cymatics, poem text.
 - `src/poetry/poemClient.ts`: frontend poem request.
 - `server/validation.ts`: server-side poem request validation.
@@ -50,7 +54,7 @@ The visual direction has moved away from the older sample-audio prototype and to
 
 ## Checks Run
 
-These checks were run on 2026-05-22 after the MATLAB integration pass:
+These checks were run on 2026-05-25 after the TouchDesigner reference pass:
 
 ```powershell
 npm run test
@@ -68,13 +72,21 @@ Result: passed.
 npm run test:e2e
 ```
 
-Result: passed. The Playwright test now starts the bowl mic flow, generates a mocked poem, and checks that the canvas is nonblank.
+Result: passed. The Playwright test starts the bowl mic flow, reveals the auto-hiding controls, generates a mocked poem, and checks that the canvas is nonblank.
 
 ```powershell
 npm run lint
 ```
 
 Result: passed.
+
+Browser smoke check:
+
+- Opened `http://127.0.0.1:5173/` with the Browser/Playwright tool.
+- Page title: `cbl`.
+- Main controls, camera stage, and poem panel rendered.
+- Console errors: 0.
+- Console warnings: 2 MediaPipe/OpenGL diagnostics during local dev rendering.
 
 ## Known Gaps
 
@@ -126,9 +138,30 @@ pattern += magnitude * sin(k * X) * sin(k * Y)
 
 The integration is validated with automated tests, but the frequency thresholds still need real-room testing with the actual bowl and microphone.
 
+### 5. TouchDesigner Reference Pass
+
+Reference:
+
+- https://vm.tiktok.com/ZGdHggUDC/
+- resolved: https://www.tiktok.com/@studio.kashi/video/7617655149653167390
+
+Goal:
+
+Use the TikTok's TouchDesigner learning path as visual direction while keeping this as a React web app.
+
+Implemented:
+
+- white abstract visual field
+- audio-reactive bloom particles
+- wrist/shoulder/head tracking rings and lines
+- chakra/frequency status text
+
+Full details: `docs/touchdesigner-reference.md`.
+
 ## Recommended Next Development Order
 
 1. Test with the real bowl and mic.
 2. Tune `MIN_PEAK_FREQUENCY`, `MAX_PEAK_FREQUENCY`, `PEAK_SPACING_HZ`, and `MIN_DOMINANT_MAGNITUDE` in `src/audio/useMicInput.ts` if chakra detection is unstable.
-3. Add a small visible chakra label if the group wants the teammate contribution to be easier to demonstrate.
-4. Update `README.md` after the behavior is stable.
+3. Test wrist tracking with hands visible in the camera.
+4. Tune the TouchDesigner-inspired visual intensity in `src/components/CameraStage.tsx` if the stage still looks too subtle.
+5. Keep `README.md` and `docs/` updated after demo-room testing.
