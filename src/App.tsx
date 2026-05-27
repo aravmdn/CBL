@@ -5,6 +5,7 @@ import { useHeartbeat } from './audio/useHeartbeat'
 import { useMicInput } from './audio/useMicInput'
 import { useCamera } from './camera/useCamera'
 import { usePoseTracking } from './camera/usePoseTracking'
+import { usePoseStream } from './net/usePoseStream'
 import { CameraStage } from './components/CameraStage'
 
 const INACTIVITY_HIDE_MS = 3000
@@ -14,6 +15,8 @@ function App() {
   const heartbeat = useHeartbeat()
   const camera = useCamera()
   const tracking = usePoseTracking(camera.videoRef, camera.status)
+  // Stream wrist/body anchors to TouchDesigner (no-op unless the TD bridge is enabled).
+  usePoseStream(tracking.anchors)
 
   const [controlsVisible, setControlsVisible] = useState(true)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
