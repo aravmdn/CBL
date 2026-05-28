@@ -1,5 +1,5 @@
 # TouchDesigner in the CBL Installation — Team Explainer
-_2026-05-26 · for Group 5 teammates_
+_Last updated 2026-05-28 · for Group 5 teammates_
 
 ## What TouchDesigner is
 TouchDesigner ("TD") is a professional **node-based, real-time visuals tool** used
@@ -40,24 +40,27 @@ Open in TouchDesigner right now (network `/project1/cbl`):
   Solfeggio note → sets the color theme.
 - **Simulated heartbeat** — a 70-BPM stand-in pulse until the Arduino arrives.
 
-**New this week — hands controlling the visuals:**
-- The web app now **streams the person's hand (wrist) positions into TD live** over
-  a local connection.
+**New (working as of 2026-05-28):**
+- The web app **streams the person's hand (wrist) positions into TD live** over a
+  local connection (no internet).
 - A **GPU particle system** uses the hands as force fields: hold a hand **still and
-  it gathers** particles toward it; **move it fast and it pushes** them away. The
-  underlying physics is built and confirmed working (particles correctly cluster to
-  the hands). The final on-screen placement of the particle layer is being polished.
-- Next: an **aura that bends/bulges around the hands**, then blending the particle
-  and aura layers into the final projector image.
+  it gathers** particles toward it; **move it fast and it pushes** them away. **The
+  particles now render at the hand positions** (the earlier placement bug was found
+  and fixed). A test with simulated hands confirmed ~50% of the 2048 particles end
+  up at each hand, zero at the center — exactly as intended.
+- An **aura that bends and tints around the hands** is built and composited.
+- The full picture (camera + cymatics + aurora + particles + hand-warped aura) is
+  combined into the final projector image (`master_out`).
+- **Open `td/cbl.toe` in TouchDesigner — that's the live build.** The earlier
+  simpler grid file is kept locally as `td/cbl.toe.bak` just in case.
+- Still pending: trying it with a real person in front of the camera (the build is
+  proven correct via simulated data, but the aesthetic feel — gather speed, glow
+  intensity, etc. — needs eyeballs).
 
 ## Visuals to show
-Snapshots of the current TD outputs are in **`docs/td-screenshots/`**:
-- `master_out.png` — the combined stage (camera + cymatics + aurora).
-- `cymatics.png`, `aurora.png` — the individual reactive layers.
-- `p_render.png` — the new particle layer (placement still being tuned).
-
-The live project is also open in TouchDesigner on the dev laptop — you can see it
-move in real time there.
+Snapshots of older TD outputs are in **`docs/td-screenshots/`** (predate the particle
+render fix). The live project on the dev laptop is the most accurate reference — open
+`td/cbl.toe` in TouchDesigner to see it move in real time.
 
 ## How it fits the 6-discipline installation
 - **Sound/physics** — bowl frequencies → cymatics + chakra color.

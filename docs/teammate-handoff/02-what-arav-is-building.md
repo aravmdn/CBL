@@ -1,6 +1,6 @@
 # What Arav Is Building
 
-_Snapshot date: 2026-05-26_
+_Snapshot date: 2026-05-28_
 
 This is the part teammates most often ask about. Arav is the **computer-science /
 signal-processing lead**. In plain terms, Arav builds **the software that listens,
@@ -61,13 +61,20 @@ TouchDesigner. This lets the look be iterated quickly.
   detection, and a **live link that streams the person's hand positions into
   TouchDesigner**.
 
-### In progress
+### Just finished (2026-05-28)
 - A **hand-controlled particle system** in TouchDesigner: hold a hand still and
-  particles gather to it; move it fast and they scatter. The physics is proven correct;
-  one display bug is being fixed (the particles currently draw stacked in the centre
-  instead of at the hands).
-- After that: an **aura that bends around the hands**, then blending all the layers
-  into the final projector image.
+  particles gather to it; move it fast and they scatter. **The display bug that had
+  particles stacked in the centre was found and fixed** — a simulated-pose test
+  confirmed about half of the 2048 particles cluster at each hand, with none at the
+  centre. The hand-warped aura is also built, and everything is composited into the
+  final projector image. The TouchDesigner build (`td/cbl.toe`) now is the full
+  reactive version.
+
+### In progress
+- **Trying the full TouchDesigner build with a real person** in front of the camera.
+  The build is proven correct via simulated hands; the unverified bit is the
+  aesthetic feel — does the gather feel fast enough, does the scatter feel right,
+  is the glow strong enough on the projector.
 
 ### Waiting on hardware
 - The **real heartbeat sensor** (Arduino pulse sensor). Until it arrives, the heartbeat

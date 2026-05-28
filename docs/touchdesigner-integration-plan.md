@@ -1,27 +1,42 @@
 # TouchDesigner Integration Plan — CBL Installation
-_Last updated: 2026-05-26_
+_Last updated: 2026-05-28_
 
-## Build Status (2026-05-26)
+## Build Status (2026-05-28)
 
-A working GPU visual network is built and saved at **`td/cbl.toe`** — see
+The full reactive GPU visual network is built and saved at **`td/cbl.toe`** — see
 `td/README.md` for the operator map. Launch it directly (it embeds the
-`TouchDesignerAPI` component on port 44444); no manual TOX drag needed.
+`TouchDesignerAPI` component on port 44444); no manual TOX drag needed. The earlier
+simpler grid version of cbl.toe is kept locally as `td/cbl.toe.bak`.
 
 Done in TD:
-- **camera_base** (COMP 3): webcam → mirror → darken.
+- **camera_base** (COMP 3): webcam → mirror → darken (`camera_in → camera_flip → camera_level → camera_out`).
 - **cymatics_shader** (COMP 4): glslTOP `sin(kx)·sin(ky)`, chakra-colored, aspect-correct.
 - **aurora_curtain** (COMP 5): glslTOP, 4 BPM-tinted ribbons.
-- **master_output** (COMP 8): camera *over* void, cymatics + aurora *added*, color-correct, preview null.
-- **audio_analysis** (COMP 1) chakra core: implemented as the `audio_out` scriptCHOP
-  (bowl spectrum → nearest Solfeggio 396–963 Hz → `peakHz/hue/energy/chakra`).
-  The **live mic is deliberately not saved** in the file (it hangs TD on the dev
-  machine — see `docs/touchdesigner-mcp.md`); run `td/enable_bowl_audio.py` on the
-  demo laptop to switch on real detection.
+- **pose bridge** (replaces OSC plan): web app streams wrists/head/torso to TD over
+  WS:9980 via `pose_ws` webserverDAT → `pose_ws_cb` → `pose_raw` scriptCHOP → `pose`
+  nullCHOP. ~25 Hz frames, gated off by default in the web app via `VITE_TD_BRIDGE=1`.
+- **body_aura → `aura_warp`** (COMP 6): glslTOP that radially glows around the torso and
+  domain-warps toward each hand, BPM/chakra-tinted.
+- **bloom_particles → `p_*` ops** (COMP 7): 2048 particles in a GLSL feedback sim
+  (`p_init`, `p_fb`, `p_sim`, `p_null`, `p_chop`, `p_ctsop`, `p_geo`, `p_render`,
+  `p_mat`, `p_sprite`, `p_quad`, `p_qnull`, `p_cam`). Particles gather to still hands,
+  scatter from fast ones. Uses SOP instancing (`p_ctsop` choptoSOP) — TOP/CHOP-only
+  instancing was finicky across TD versions, see resume doc §3.
+- **master_output** (COMP 8): final chain is
+  `comp_aur(add) → comp_bloom(add, +p_render) → comp_aura(screen, +aura_warp) → master_level → master_out`.
+- **audio_analysis** (COMP 1) chakra core: `audio_out` scriptCHOP (bowl spectrum →
+  nearest Solfeggio 396–963 Hz → `peakHz/hue/energy/chakra`). The **live mic is
+  deliberately not saved** in the file (it hangs TD on the dev machine); run
+  `td/enable_bowl_audio.py` on the demo laptop to switch on real detection.
 - **heartbeat** (COMP 2 stand-in): lfoCHOP at 1.17 Hz until the Arduino arrives.
 
-Not yet built (lower priority / need hardware): OSC bridge to the web app,
-`body_aura` (COMP 6) from MediaPipe landmarks, `bloom_particles` (COMP 7) POP
-system, `heartbeat_serial` (COMP 2) Arduino reads.
+Not yet built (lower priority / need hardware): `heartbeat_serial` (COMP 2) Arduino
+reads. The original OSC bridge plan is **superseded** by the WebSocket pose bridge —
+no OSC needed.
+
+Smoke-tested 2026-05-28 with synthetic pose (commit `5e09fe6`): hands at u=0.30 / 0.70
+with confidence 1.0 produced 1031 particles toward L hand, 1006 toward R hand, 0 at
+center. See `docs/touchdesigner-resume-2026-05-27.md` for the full session log.
 
 ## Goal
 Run TouchDesigner as the GPU rendering engine for the projector output, with the web app as a monitoring/control panel on the primary screen. All on Arav's single machine.

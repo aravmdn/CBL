@@ -2,7 +2,10 @@
 
 `cbl.toe` is the GPU visual installation built for the Creative Bowl Lab demo.
 It mirrors the React/Vite app's visual language (deep void + chakra-colored
-cymatics + BPM-tinted aurora) but renders on the GPU for projector output.
+cymatics + BPM-tinted aurora) and adds a GPU **hand-particle system** plus a
+**hand-warped body aura** driven by the live web-app pose stream — all rendered
+on the GPU for projector output. The earlier simpler grid version of cbl.toe is
+backed up locally as `cbl.toe.bak`.
 
 ## Open it
 
@@ -21,13 +24,32 @@ cymatics + BPM-tinted aurora) but renders on the GPU for projector output.
 | `camera_in → camera_flip → camera_level → camera_out` | webcam, mirrored selfie view, darkened |
 | `cymatics` (glslTOP) | chladni `sin(kx)·sin(ky)` interference, chakra-colored, aspect-correct |
 | `aurora` (glslTOP) | 4 undulating BPM-tinted light ribbons |
-| `comp_cam / comp_cym / comp_aur` | composite: camera *over* void, cymatics + aurora *added* |
+| `pose_ws → pose_ws_cb → pose_raw → pose` | **pose bridge**: webserverDAT (port 9980) receives wrist/head/torso JSON from the web app; scriptCHOP smooths + computes per-hand speeds; `pose` nullCHOP is the public read point |
+| `p_init / p_fb / p_sim / p_null / p_chop / p_ctsop / p_geo / p_render / p_mat / p_sprite / p_quad / p_qnull / p_cam` | **GPU particle system**: 2048 particles in a GLSL feedback sim; gather to still hands, scatter from fast ones. `p_render` is the rendered particle layer |
+| `aura_warp` (glslTOP) | **hand-warped body aura**: radial torso glow domain-warped toward each hand, BPM/chakra tinted |
+| `comp_cam / comp_cym / comp_aur / comp_bloom / comp_aura` | composite chain: camera *over* void → +cymatics → +aurora → +p_render (add) → screen with aura_warp |
 | `master_level → master_out` | color correct + final null (preview / projector feed) |
 | `audio_out` (scriptCHOP) | **chakra core**: bowl spectrum → nearest Solfeggio (396–963 Hz) → `peakHz / hue / energy / chakra`. Input is OPTIONAL — no input = safe defaults |
 | `heartbeat` (lfoCHOP) | 1.17 Hz (~70 BPM) sim pulse; drives the beat scaling until the Arduino arrives |
 
-The shader uniforms on `cymatics`/`aurora` are expressions reading `audio_out`
-and `heartbeat`, so the whole stage reacts to sound + pulse with no extra wiring.
+The shader uniforms on `cymatics` / `aurora` / `aura_warp` / `p_sim` are
+expressions reading `pose`, `audio_out`, and `heartbeat`, so the whole stage
+reacts to sound + pulse + hands with no extra wiring.
+
+## Enable the hand-particle feature live
+
+Open `td/cbl.toe` in TouchDesigner (timeline plays on open). Then start the web app
+with the pose bridge on:
+
+```powershell
+$env:VITE_TD_BRIDGE = '1'; npm run dev
+```
+
+(or in the browser devtools console: `localStorage['td-bridge']='1'`, then reload).
+
+Open http://localhost:5173, allow camera. The TD `pose_ws` DAT should show 1
+connected client, the `pose` CHOP channels should change as you move your hands,
+and `master_out` should show the particles gathering/scattering at the wrists.
 
 ## Enable the live bowl mic
 

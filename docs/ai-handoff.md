@@ -1,6 +1,6 @@
 # AI Handoff Notes
 
-Date: 2026-05-25
+Date: 2026-05-28
 
 This file is for Claude, Codex, or another coding assistant picking up the CBL project.
 
@@ -66,12 +66,40 @@ The MATLAB part analyzes the sound. The web app turns that analysis into the liv
 The `claude-touchdesigner` MCP plugin (v0.1.6) is installed on Arav's machine. It connects Claude Code to a running TouchDesigner instance over HTTP.
 
 To use it in a session:
-1. Open TouchDesigner, drag in the TOX (path in `docs/touchdesigner-mcp.md`)
-2. Set Port = 44444 on the component
-3. Run `/touchdesigner` in Claude Code to load the skill
-4. Then ask Claude to build TD networks in natural language
+1. Open TouchDesigner with `td/cbl.toe` (the API tox is embedded). Set play state if paused.
+2. The MCP listens on port 44444 — verify with `Get-NetTCPConnection -LocalPort 44444 -State Listen`.
+3. Run `/touchdesigner` in Claude Code to load the skill.
+4. Then ask Claude to build/edit TD networks in natural language.
 
-This is for prototyping GLSL effects and visual ideas in TD; the live demo product remains the React/Vite web app.
+As of 2026-05-28, **`td/cbl.toe` is the full reactive build** (hand-particle feature, aura
+warp, camera/cymatics/aurora layers, composited to `master_out`). The previous simpler grid
+file is backed up locally as `td/cbl.toe.bak` — do not delete until the live test passes.
+The TD build is now a real second visual path for the projector, not just a prototyping toy.
+
+## TouchDesigner Hand-Particle Feature (2026-05-26 → 2026-05-28)
+
+Three-session arc that built and shipped a GPU particle system whose 2048 particles are
+pulled to the person's wrists by the live web-app pose stream.
+
+- **2026-05-26 (handoff doc):** built the pose bridge (web → TD over WS:9980) and the
+  particle ops (`p_init`, `p_fb`, `p_sim`, `p_chop`, `p_geo`, `p_render`, etc.). Physics
+  proven correct (p_sim positions correctly span ±0.23 for hands at u=0.30/0.70) but a
+  render-mapping bug stacked all 2048 instances at screen center.
+- **2026-05-27 (resume doc):** root cause found — `p_geo.par.instancing` master toggle was
+  False. Fixed via SOP instancing path (`p_ctsop` choptoSOP), particles render at hand
+  pixels, aura_warp built, full composite chain assembled. Saved as `td/cbl_hands_wip.toe`.
+- **2026-05-28 (this commit pair, `2109600` + `5e09fe6`):** promoted WIP → `td/cbl.toe`
+  (old cbl.toe kept as `td/cbl.toe.bak`). Synthetic-pose smoke test uncovered three more
+  latent bugs and fixed them: `uTorso.x` unbound (home offset), `uSpeed.{x,y,z,w}` all
+  unbound (scatter + energy noise dead), `root.time.play = False` (feedback shader did not
+  iterate). After fixes, synthetic hands produced 1031 / 1006 / 0 particle distribution at
+  L hand / R hand / center — exactly as designed.
+
+**Still pending:** live end-to-end test with a person in front of the camera. The build is
+proven correct end-to-end via synthetic data; the unverified piece is aesthetic feel
+(gather speed, scatter threshold, glow intensity).
+
+See `docs/touchdesigner-resume-2026-05-27.md` for the operator-level log and `docs/touchdesigner-handoff-2026-05-26.md` for the original build journal.
 
 ## Visual Changes Since Midterm (2026-05-19 → 2026-05-25)
 

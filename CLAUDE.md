@@ -53,6 +53,9 @@ legacy poem API    - dormant server/client code, not connected to the active UI
 - `docs/current-status.md` — current app state and known risks.
 - `docs/matlab-integration-ideation.md` — teammate MATLAB integration rationale.
 - `docs/touchdesigner-reference.md` — TikTok reference link, goal, and TouchDesigner-inspired visual pass.
+- `docs/touchdesigner-for-teammates.md` — plain-language TD explainer for Group 5.
+- `docs/touchdesigner-handoff-2026-05-26.md` — operator-level handoff for the hand-particle feature.
+- `docs/touchdesigner-resume-2026-05-27.md` — running log of TD work; the single entry point to continue.
 - `docs/ai-handoff.md` — concise takeover notes for Claude/Codex.
 - `docs/touchdesigner-mcp.md` — how to use the claude-touchdesigner MCP plugin to build TD networks from Claude Code.
 
@@ -89,6 +92,7 @@ legacy poem API    - dormant server/client code, not connected to the active UI
 - [x] Active poem UI removed
 - [x] Responsive layout focused on the visual stage
 - [x] claude-touchdesigner MCP plugin installed (v0.1.6) — see `docs/touchdesigner-mcp.md`
+- [x] TouchDesigner reactive build (`td/cbl.toe`) — pose bridge (web→TD WS:9980), 2048-particle GPU sim that gathers/scatters from wrists, hand-warped aura, composited with camera/cymatics/aurora to `master_out`. Smoke-tested 2026-05-28 with synthetic pose: 1031/2048 particles to L hand, 1006/2048 to R hand, 0 at center. See `docs/touchdesigner-resume-2026-05-27.md`.
 
 ## Pending - Hardware Not Yet Available
 
@@ -96,7 +100,8 @@ legacy poem API    - dormant server/client code, not connected to the active UI
 |---|---|---|
 | Arduino pulse sensor -> real BPM | `src/audio/useHeartbeat.ts`; replace `setTimeout` loop with `navigator.serial` reads | Interface (`HeartbeatState`) is already defined; swap only the `useEffect` body |
 | Tune bowl chakra detection | `src/audio/useMicInput.ts` | Test with the real bowl/mic and tune frequency/magnitude thresholds if detection jumps |
-| Tune visual intensity | `src/components/CameraStage.tsx` | Test on the demo laptop/projector and adjust white field, bloom particles, aura, and tracking node opacity |
+| Tune visual intensity (web app) | `src/components/CameraStage.tsx` | Test on the demo laptop/projector and adjust white field, bloom particles, aura, and tracking node opacity |
+| Live TD test with a person | run web app with `VITE_TD_BRIDGE=1` while `td/cbl.toe` is open | Smoke-tested with synthetic pose; aesthetic feel (gather speed, scatter threshold, glow intensity) still unverified |
 
 ## Teammate Contributions (`EngineeringArt CBL/`)
 

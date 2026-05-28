@@ -1,6 +1,6 @@
 # Current Status
 
-Date: 2026-05-25
+Date: 2026-05-28
 
 ## Repository State
 
@@ -105,6 +105,25 @@ Browser smoke check:
 ### 0. TouchDesigner MCP Plugin
 
 The `claude-touchdesigner` MCP plugin (v0.1.6) is installed. See `docs/touchdesigner-mcp.md` for full setup. This lets Claude Code build TouchDesigner networks directly — useful for prototyping GLSL effects and visual ideas before porting them to the canvas. `TDAPI_PORT=44444` is set permanently in Windows user environment variables.
+
+### 0b. TouchDesigner Reactive Build (`td/cbl.toe`)
+
+As of 2026-05-28, `td/cbl.toe` is the **full reactive build** (the prior simpler grid file is
+backed up locally as `td/cbl.toe.bak`). It contains:
+- Pose bridge — webserverDAT on port 9980 receives wrist/head/torso from the web app
+- GPU particle sim — 2048 particles pulled to wrists; gather when still, scatter when moving
+- Hand-warped body aura (`aura_warp` glslTOP), BPM/chakra tinted
+- Camera + cymatics + aurora layers composited beneath
+- Final chain: `comp_aur → comp_bloom(add) → comp_aura(screen) → master_level → master_out`
+
+Three latent bugs were fixed via a synthetic-pose smoke test on 2026-05-28 (commit `5e09fe6`):
+`uTorso.x` was unbound (biased the particle home off-center), all of `uSpeed.{x,y,z,w}` were
+unbound (scatter-from-fast-hands and audio energy chaos noise were dead), and
+`root.time.play` was False (the feedback shader could not iterate). With these fixed,
+synthetic hands at u=0.30 and u=0.70 produced **1031 particles toward L hand, 1006 toward
+R hand, 0 at center** — exactly what the shader intends. Live test with a person in front
+of the camera is still pending. See `docs/touchdesigner-resume-2026-05-27.md` for the
+running TD log.
 
 ### 1. Active Poetry Was Removed From The UI
 

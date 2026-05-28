@@ -55,6 +55,44 @@ raw `parent.create(opType, name)` was used instead and worked fine.
 
 If the live test later reveals a regression, restore with: `mv td/cbl.toe.bak td/cbl.toe`.
 
+## ✅ SMOKE TEST + UNIFORM FIXES — 2026-05-28 (fifth session)
+
+Drove the pipeline with synthetic pose data (no person needed) to validate the build
+end-to-end. Found three more latent bugs the prior sessions had missed; fixed them in
+commit `5e09fe6`.
+
+**Bugs uncovered:**
+- `uTorso.x` on `p_sim` was unbound. The shader uses `uTorso.x` as the home X position
+  for the particle disc; the slider sat at ~0.0563 (leftover), so the particle home
+  was offset off-center even when the torso was centered. Bound to
+  `op('pose')['torso_u']-0.5`.
+- `uSpeed.{x,y,z,w}` on `p_sim` were ALL unbound. The shader reads `uSpeed.x/y` as the
+  per-hand speeds (the gate between gather and scatter) and `uSpeed.z` as energy noise
+  scaling. With none bound, fast-hand scatter was dead and the audio-energy chaos
+  noise was zero. Bound to `pose['lWrist_spd']`, `pose['rWrist_spd']`,
+  `audio_out['energy']`, `heartbeat['beat']`.
+- `root.time.play = False`. TD's timeline was paused, so the feedback shader (which
+  iterates particle positions across frames) never advanced — all 2048 particles
+  stayed clamped at their first-frame home position regardless of any uniform changes.
+  Set `True` so the file plays on open.
+
+**Smoke-test method:** stored synthetic pose into the COMP storage as
+`op('/project1/cbl').store('pose_msg', {...})` and let TD's renderer iterate for ~3s of
+wall-clock at 60 fps between two separate `td_execute` calls (sleeping inside a single
+`td_execute` blocks the renderer thread). Sampled `p_sim` pixel-by-pixel and counted
+the particle x-distribution.
+
+**Result with hands at u=0.30 (L) and u=0.70 (R), confidence 1.0:**
+- 1031 particles with x < -0.15 (toward L hand)
+- 1006 particles with x > +0.15 (toward R hand)
+- 0 particles at center
+- x range -0.239 to +0.239 (clean overshoot past the ±0.20 target — physics-correct)
+- `master_out` samples show bright magenta/violet peaks at the wrist pixels.
+
+**Outstanding:** still the live end-to-end test with a real person — but the build is
+proven correct end-to-end via synthetic data. The unverified piece is now purely
+aesthetic feel (gather speed, scatter threshold, glow intensity on a projector).
+
 ---
 
 ## 0. Why the last session stopped (READ FIRST)
@@ -108,6 +146,13 @@ td_execute: print(project.name)   # should print cbl or cbl.1
 ---
 
 ## 1. What your teammates saw ("just a grid, nothing happening")
+
+> **2026-05-28 update:** this section describes the state at the *start* of the
+> resume session, when `cbl.toe` was still the simpler grid file and the reactive
+> build lived in `cbl_hands_wip.toe`. **Today, `td/cbl.toe` is the reactive build**
+> (the original is backed up locally as `cbl.toe.bak`). Teammates opening
+> `cbl.toe` now see the hand-particle feature directly. The text below is kept
+> for historical context.
 
 They opened **`td/cbl.toe`** — the *basic* visual file. It has camera + a
 cymatics **grid** (`sin(kx)·sin(ky)`) + aurora ribbons, and its reactivity reads

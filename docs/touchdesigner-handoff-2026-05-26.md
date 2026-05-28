@@ -1,9 +1,36 @@
 # TouchDesigner Hand-Particle Feature — Handoff
-_Session date: 2026-05-26_
+_Session date: 2026-05-26 · Last updated: 2026-05-28_
 
 ---
 
-## FINAL STATUS (updated at session end — 2026-05-26)
+## ✅ FEATURE SHIPPED — 2026-05-28
+
+The hand-particle feature is **complete, promoted to `td/cbl.toe`, and smoke-tested
+end-to-end with synthetic pose data**. Commits: `2109600` (promote WIP → cbl.toe) and
+`5e09fe6` (uniform fixes + enable timeline play).
+
+Open `td/cbl.toe` to see the working build. The earlier "particles stack at center"
+bug was fixed in the 2026-05-27 session via the SOP-instancing path
+(`p_ctsop` choptoSOP + `p_geo.par.instancing=True`). Three further latent bugs found
+and fixed on 2026-05-28 via a synthetic-pose smoke test:
+
+- `uTorso.x` was unbound on `p_sim` — biased the particle home off-center. Bound to
+  `op('pose')['torso_u']-0.5`.
+- `uSpeed.{x,y,z,w}` were ALL unbound on `p_sim` — scatter-from-fast-hands and
+  audio-energy chaos noise were dead. Bound to wrist speeds, audio energy, heartbeat.
+- `root.time.play = False` — the feedback shader could not iterate. Now True so the
+  file plays on open.
+
+Smoke-test result: synthetic hands at u=0.30 (L) and u=0.70 (R) with confidence 1.0
+produced **1031 particles toward L hand** (x<-0.15), **1006 toward R hand** (x>+0.15),
+**0 at center**, x range -0.24 to +0.24 — exactly the shader's intended behavior.
+
+The detailed running log of this work and the still-pending live-with-a-person test
+lives in **`docs/touchdesigner-resume-2026-05-27.md`**.
+
+---
+
+## ORIGINAL FINAL STATUS (2026-05-26 — superseded by section above; left for historical context)
 
 **Where we stopped:** The web→TD pose pipe is DONE and verified. The GPU particle
 system is ~90% built and the **physics simulation is proven correct** — particles

@@ -1,6 +1,6 @@
 # Current Status and What's Next
 
-_Snapshot date: 2026-05-26_
+_Snapshot date: 2026-05-28_
 
 A quick, honest picture of where the software is right now.
 
@@ -15,19 +15,22 @@ A quick, honest picture of where the software is right now.
 - **Polished look:** deep-black background, elegant fonts, controls that fade away so
   the visuals fill the screen.
 - **TouchDesigner version:** camera stage, cymatics, aurora ribbons, colour detection,
-  and a **working live link** that streams the person's hand positions into
-  TouchDesigner.
+  a **working live link** that streams the person's hand positions into TouchDesigner,
+  **hand-controlled particles** that gather to still hands and scatter from fast ones,
+  and a **hand-warped aura** — all composited into one image for the projector. The
+  earlier "particles stacked in the centre" bug was found and fixed; a simulated-pose
+  test confirmed particles correctly cluster at both hands.
 
-You can see the current visuals in the `screenshots/` folder.
+You can see the older visuals in the `screenshots/` folder; the live build on the dev
+laptop is the most up-to-date reference.
 
 ## In progress
 
-- **Hand-controlled particles (TouchDesigner):** hold a hand still → particles gather;
-  move it fast → they scatter. The behaviour is proven correct; one display bug remains
-  (particles currently render stacked in the centre instead of at the hands). That's the
-  first thing to fix when work resumes.
-- After that: an **aura that bends around the hands**, then blending all layers into the
-  final projector image.
+- **Live test with a real person.** The build is proven correct end-to-end with
+  simulated hand positions, but it hasn't been tried with someone moving in front of
+  the camera yet. That's the next thing — and what's being checked is the
+  *aesthetic feel* (does it gather fast enough? does the scatter feel right? is the
+  glow strong enough on the projector?), not whether it functions.
 
 ## Waiting on hardware
 
@@ -48,12 +51,13 @@ in the actual room:
 
 ## What's next (in order)
 
-1. Test with the real bowl and microphone; tune the colour-detection settings if it
+1. Test the TouchDesigner build with a real person in front of the camera; tune
+   gather/scatter feel and glow intensity if needed.
+2. Test with the real bowl and microphone; tune the colour-detection settings if it
    jumps around.
-2. Fix the TouchDesigner particle display bug so particles appear at the hands.
-3. Add the hand-warped aura, then combine all the visual layers for the projector.
-4. When the Arduino arrives, swap the simulated heartbeat for the real sensor.
-5. Test the whole thing in the demo room and tune the visual intensity.
+3. When the Arduino arrives, swap the simulated heartbeat for the real sensor.
+4. Test the whole thing in the demo room and tune the visual intensity for the
+   projector.
 
 ## How "done" is checked (for coding teammates)
 

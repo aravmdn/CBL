@@ -1,6 +1,6 @@
 # CBL Project Notes
 
-Date: 2026-05-25
+Date: 2026-05-28
 
 This folder is a handoff/reference area for the CBL web app. It exists so the project can be resumed by the team, Codex, Claude, or another assistant without needing the full chat history.
 
@@ -9,6 +9,9 @@ This folder is a handoff/reference area for the CBL web app. It exists so the pr
 - [Current status](./current-status.md): what the app does now, what is parked, and what checks were run.
 - [MATLAB integration ideation](./matlab-integration-ideation.md): how the teammate MATLAB work connects to the web app.
 - [TouchDesigner reference handoff](./touchdesigner-reference.md): TikTok source link, visual goal, and implemented white/audio/hand-tracking pass.
+- [TouchDesigner for teammates](./touchdesigner-for-teammates.md): plain-language explainer of the TD build for Group 5.
+- [TouchDesigner hand-particle handoff](./touchdesigner-handoff-2026-05-26.md): operator-level build log for the GPU particle + aura feature.
+- [TouchDesigner resume plan](./touchdesigner-resume-2026-05-27.md): the single entry point to continue TD work (and the running log of what's done).
 - [TouchDesigner MCP](./touchdesigner-mcp.md): how to use the claude-touchdesigner plugin to build TD networks from Claude Code.
 - [AI handoff](./ai-handoff.md): concise context for Claude/Codex before making future changes.
 
@@ -42,4 +45,12 @@ The TouchDesigner-inspired pass is also implemented:
 TikTok visual reference -> white visual field -> audio bloom particles -> wrist/body tracking nodes
 ```
 
-Next, test with the real bowl, mic, and camera in the demo room. Tune the frequency thresholds and visual intensity if the result is too subtle or too jumpy.
+The TouchDesigner network itself (`td/cbl.toe`) now contains the **reactive build**: a GPU
+particle system whose 2048 particles are pulled to the wrists by the live web-app pose stream,
+a hand-warped aura, plus the existing camera/cymatics/aurora layers, all composited to
+`master_out`. A synthetic-pose smoke test on 2026-05-28 confirmed particles gather to both
+hands correctly (1031 → L, 1006 → R, 0 at center). Open `td/cbl.toe` directly to see it.
+
+Next, test with the real bowl, mic, and camera in the demo room — and run the TD build with
+a person actually moving in front of the camera (web app with `VITE_TD_BRIDGE=1`). Tune the
+frequency thresholds and visual intensity if the result is too subtle or too jumpy.
