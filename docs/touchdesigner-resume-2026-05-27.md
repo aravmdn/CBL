@@ -9,7 +9,64 @@ where to start. Full operator-level detail lives in
 
 ---
 
+## ✅ RESOLVED — 2026-05-27 (third session, post-reboot)
+
+The laptop was rebooted; TD booted healthy and the MCP responded. **The headline
+feature is now fully built, composited, and saved to `td/cbl_hands_wip.toe`.**
+
+**Root cause of the "particles stack at center" bug:** the geometryCOMP's master
+**`instancing` toggle was `False`**. The prior session had set `instanceactive=1`
+(a different per-instance-set flag) and tuned `instanceop`/`instancetx`, but the
+master `p_geo.par.instancing` switch was never turned on, so the COMP rendered its
+template quad exactly once at the origin. Setting `p_geo.par.instancing = True`
+(plus the SOP-instancing path below) made all 2048 particles render at the hands.
+
+**What was built this session (all verified, no network errors):**
+- `p_ctsop` (choptoSOP): reads `p_chop` via its **`chop` parameter** (choptoSOP has
+  no wired CHOP input — that was a second bug in the old `fix_particles()`), with
+  `chanscope='r g'`, `attscope='P(0) P(1)'`, `mapping='onetoone'` → 2048 points
+  carrying particle XY in P (Z=0). The `p_rename` op is NOT needed and was removed
+  (TD sanitizes `P(0)`→`P_0_` in channel names, so the rename trick fails; map
+  channels→position via `chanscope`/`attscope` instead).
+- `p_geo`: `instancing=True`, `instanceop=p_ctsop`, `instancetx='P(0)'`,
+  `instancety='P(1)'`, `instancecountmode='oplength'`. Render sampling confirmed two
+  clusters at the hand x-bands (~320–400 and ~840–960), not stacked at center.
+- `aura_warp` (glslTOP 1280×720): loads `td/aura_warp.frag`, uniforms `uHands`/
+  `uSpeeds`/`uMisc` bound via `vecNname`/`vecNvaluex.expr` reading `pose`,
+  `audio_out['hue']`, `heartbeat['beat']`. Compiles clean, outputs a hue-tinted glow.
+- Composite: `comp_aur → comp_bloom (add, +p_render) → comp_aura (screen, +aura_warp)
+  → master_level`. `master_out` shows particle clusters + aura, no errors.
+
+**Note:** `op.TDAPI.CreateOp` threw `tdError` after creating ops on this build —
+raw `parent.create(opType, name)` was used instead and worked fine.
+
+**What's left:**
+1. **Live end-to-end test** (needs a person): run the web app with the pose bridge
+   on (§5), allow camera, and confirm hands gather/scatter the particles visually.
+
+## ✅ PROMOTED — 2026-05-28 (fourth session)
+
+`cbl_hands_wip.toe` → `cbl.toe` done (live test skipped at user's call). Sequence:
+- Verified no live audio input ops in the network (safe to save).
+- `op.TDAPI.CheckErrors('/project1/cbl', recurse=True)` → clean.
+- Renamed old `cbl.toe` (16546 b) → `cbl.toe.bak`, then `project.save('cbl.toe')`
+  returned True. New `cbl.toe` is 21738 bytes. `project.name` is now `cbl.1.toe`.
+- WIP file preserved at 21586 bytes.
+
+If the live test later reveals a regression, restore with: `mv td/cbl.toe.bak td/cbl.toe`.
+
+---
+
 ## 0. Why the last session stopped (READ FIRST)
+
+> **Update — 2026-05-27 (second session, after the doc was first written):**
+> The boot hang was **reproduced a 4th time** and the wedged TD processes were
+> killed (clean slate). TD still requires a **laptop reboot** — that had not been
+> done yet. **Ready-to-run resume scripts were prepared offline while TD was
+> down** (see below); run them once TD boots healthy post-reboot:
+> - `td/aura_warp.frag` — complete aura shader (loaded by the builder).
+> - `td/resume_build.py` — `diagnose()`, `fix_particles()`, `build_aura()`,
+>   `composite()`. Run one per `td_execute`, checking errors in a separate call.
 
 The work was **not** blocked by anything in the project — it was blocked by
 **TouchDesigner failing to boot** on this machine.
@@ -74,10 +131,12 @@ priority is finishing the particle feature in the WIP file.
 |---|---|
 | Web→TD pose pipe (wrists stream browser→TD over WS :9980) | **DONE & verified** |
 | GPU particle physics (gather to still hands, scatter from fast hands) | **DONE & proven correct** (`p_sim` positions span the hands) |
-| Particle **rendering** | **BROKEN** — all 2048 instances draw stacked at screen-center; per-instance translate not applied. **FIX THIS FIRST.** |
-| Hand-warped body aura (`aura_warp`) | not started |
-| Composite particles + aura into master chain | not started |
-| Save / promote WIP → `cbl.toe` | not started |
+| Particle **rendering** | **DONE** — root cause was `p_geo.par.instancing=False`; fixed via SOP instancing + master toggle on. Clusters render at the hands. |
+| Hand-warped body aura (`aura_warp`) | **DONE** — glslTOP built, compiles clean, hue-tinted glow |
+| Composite particles + aura into master chain | **DONE** — `comp_bloom`(add)→`comp_aura`(screen)→`master_level` |
+| Save WIP (`td/cbl_hands_wip.toe`) | **DONE** — saved 21586 bytes, no errors |
+| Promote WIP → `cbl.toe` | **DONE** — 2026-05-28, 21738 bytes; old cbl.toe kept as `cbl.toe.bak` |
+| Live end-to-end test (person moving hands) | **PENDING** — needs the web bridge + a person (§5) |
 
 Network path for everything: **`/project1/cbl`**. Particle ops are listed in
 the 2026-05-26 handoff ("Particle ops actually built this session").
@@ -99,6 +158,8 @@ the expected hand pixels (~384,302 and ~896,302).
   at origin.
 
 **Recommended fix (most reliable TD path): instance from a SOP, not a TOP→CHOP.**
+This is pre-implemented as `fix_particles()` in `td/resume_build.py` (untested —
+TD was down when written; adjust param tokens if rejected).
 TOP→CHOP→instance translate is finicky across TD versions. The robust path:
 1. `choptoSOP` (or `toptoSOP` off `p_null`) → 2048 points carrying position in P.
 2. Point `p_geo.par.instanceop` at that SOP.
@@ -125,7 +186,8 @@ Y (`v = 1 - y`). World mapping: `x = u - 0.5`, `y = (v - 0.5) * 0.5625`.
 
 ## 4. Remaining steps after the bug (in order)
 
-Detailed GLSL/uniform specs are in the 2026-05-26 handoff §5. Summary:
+Detailed GLSL/uniform specs are in the 2026-05-26 handoff §5. Steps 1–2 below are
+pre-implemented as `build_aura()` and `composite()` in `td/resume_build.py`. Summary:
 
 1. **`aura_warp`** (handoff §5 Step 2): one glslTOP 1280×720, radial torso glow
    domain-warped toward each hand, BPM/chakra tinted. Uniforms read `pose`,
