@@ -91,14 +91,21 @@ downstream uniform on `p_sim` / `aura_warp` keeps working unchanged.
 the particle/aura build in `td/cbl.toe` (smoke-tested with synthetic pose:
 1031 → L hand, 1006 → R hand, 0 at center).
 
-**Pending (Track B — needs TD open on MCP :44444 + a person, browser closed):**
-1. Place the `pose_mp` scriptCHOP in `/project1/cbl` (load `td/pose_mp_callbacks.py`).
-2. Repoint the public `pose` read point from the `pose_ws` bridge to `pose_mp`.
-3. Confirm `camera_in` is a live `videodeviceinTOP` selecting the laptop webcam.
-4. Verify live with a person, browser closed: camera **live, not frozen**; particles
-   and aura react to real hands.
-5. `CheckErrors(recurse=True)` clean → save (mic-free), then enable audio at runtime.
-6. Tune aesthetics on the projector (gather speed, scatter threshold, glow).
+**Track B — DONE 2026-05-29** (wired via the claude-touchdesigner MCP, TD open, no browser):
+1. ✅ Placed the `pose_mp` scriptCHOP in `/project1/cbl` (callbacks DAT `pose_mp_cb` loads
+   `td/pose_mp_callbacks.py`); `td/pylibs` added to `sys.path` so cv2/mediapipe import.
+2. ✅ Repointed the public `pose` null from `pose_raw` (browser bridge) to `pose_mp`. The
+   `pose_ws → pose_ws_cb → pose_raw` chain is kept but disconnected (easy revert).
+3. ✅ `camera_in` confirmed a live `videodeviceinTOP` (1280×720, active).
+4. ✅ Verified live, no browser: `frames_processed` climbing at ~60 fps, MediaPipe landmarks
+   present, `pose` head conf **0.966** / torso conf **0.995** straight from `camera_in`.
+   Network error count 0; `master_out` renders clean. Saved to `td/cbl.toe` (23.4 KB).
+
+**Remaining:**
+- **Live aesthetic check (needs hands in frame):** confirm particles gather to still hands /
+  scatter from fast ones and the aura warps; tune gather speed / scatter threshold / glow.
+- On the demo laptop, enable the bowl mic at runtime (`td/enable_bowl_audio.py`); keep the
+  saved `.toe` mic-free.
 
 The running operator-level log is `docs/touchdesigner-resume-2026-05-27.md`; the
 operator map is `td/README.md`.

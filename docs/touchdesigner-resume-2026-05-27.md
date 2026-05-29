@@ -30,10 +30,13 @@ The fix already existed on disk from a prior session but was **never committed o
 This session committed the recovered engine + offline models (pylibs git-ignored, recreate via
 `td/requirements.txt`) and realigned every doc/memory to TD-primary.
 
-**Open Track B (needs TD on :44444 + a person, browser closed):** place `pose_mp` in
-`/project1/cbl`, repoint the public `pose` read point from the `pose_ws` bridge to `pose_mp`,
-confirm `camera_in` is a live `videodeviceinTOP`, verify live (camera not frozen; particles/aura
-react to real hands), then save mic-free and tune aesthetics.
+**Track B DONE (same session, TD open, no browser):** placed `pose_mp` scriptCHOP (callbacks
+DAT `pose_mp_cb` loads `td/pose_mp_callbacks.py`; `td/pylibs` on `sys.path` for cv2/mediapipe),
+repointed the public `pose` null from `pose_raw` → `pose_mp` (browser chain kept, disconnected),
+confirmed `camera_in` is a live `videodeviceinTOP`. Verified live: `frames_processed` ~60 fps,
+landmarks present, `pose` head conf 0.966 / torso conf 0.995 from TD's own camera; 0 network
+errors; `master_out` clean. Saved to `td/cbl.toe` (23.4 KB). **Remaining = live aesthetic check
+with hands in frame** (gather/scatter/glow tuning) + runtime bowl mic on the demo laptop.
 
 ## ✅ RESOLVED — 2026-05-27 (third session, post-reboot)
 

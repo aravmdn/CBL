@@ -67,9 +67,9 @@ heartbeat (lfoCHOP)           - ~70 BPM sim pulse until the Arduino arrives
 composite -> master_out       - void -> camera -> +cymatics -> +aurora -> +particles -> screen aura -> projector
 ```
 
-NOTE: the committed `cbl.toe` still wires the retired browser bridge (`pose_ws`) as the
-pose source; swapping it to `pose_mp` is the open Track-B step (see Pending and the
-one-surface doc).
+NOTE: as of 2026-05-29 `cbl.toe` sources `pose` from the **TD-native `pose_mp`** scriptCHOP
+(the browser `pose_ws` bridge is kept but disconnected for easy revert). Verified live with
+no browser: head/torso tracked at 0.97/0.99 confidence straight from `camera_in`.
 
 **Secondary: React/Vite web app** (kept as a dev tool / fallback; mirrors the same visual
 language on a 2D canvas). `useMicInput` (FFT peaks + chakra), `useHeartbeat` (simulated
@@ -138,8 +138,8 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 
 | Task | Where to change | Notes |
 |---|---|---|
-| **Wire TD standalone (Track B)** — place `pose_mp`, repoint `pose` from the `pose_ws` bridge to `pose_mp`, confirm `camera_in` is a live `videodeviceinTOP` | `td/cbl.toe` via the claude-touchdesigner MCP | Code exists (`td/pose_mp_callbacks.py`); needs placing/wiring in the `.toe`. **Needs TD open on :44444.** |
-| **Live TD test with a person, browser closed** | run `td/cbl.toe` standalone, stand in frame | Verify camera is live (not frozen) and particles/aura react to real hands; then tune gather speed / scatter threshold / glow |
+| ~~Wire TD standalone (Track B)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pose_mp` placed + wired (loads `td/pose_mp_callbacks.py`), `pose` repointed to it, `camera_in` confirmed live. Verified: head/torso 0.97/0.99, no browser. |
+| **Live aesthetic check with hands in frame** | run `td/cbl.toe` standalone, raise hands | Confirm particles gather to still hands / scatter from fast ones and the aura warps; tune gather speed / scatter threshold / glow if needed |
 | Arduino pulse sensor -> real BPM | TD `heartbeat` LFO → `serialCHOP` (and `src/audio/useHeartbeat.ts` for the web fallback) | Output channel must stay named `beat` |
 | Tune bowl chakra detection | `td/audio_out` (and `src/audio/useMicInput.ts` for the web fallback) | Test with the real bowl/mic and tune thresholds if detection jumps |
 

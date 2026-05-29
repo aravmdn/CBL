@@ -158,8 +158,11 @@ is the `pose_mp` scriptCHOP that reads TD's own `camera_in`, runs the engine, an
 same channels as the retired browser bridge. Models are bundled in `td/models/` (offline);
 the runtime `td/pylibs/` is git-ignored (recreate via `td/requirements.txt`). This is what
 lets TD run with **no browser**. Built in a prior session but never committed — now in git.
-**Open Track B:** place `pose_mp` in `cbl.toe` and repoint the public `pose` read point to it
-(needs TD open + a person, browser closed). See `docs/touchdesigner-onesurface-2026-05-27.md`.
+**Track B done 2026-05-29:** `pose_mp` placed + wired in `cbl.toe`, the public `pose` null
+repointed to it (browser chain kept but disconnected), `camera_in` confirmed live. Verified
+with no browser: head/torso tracked at 0.97/0.99 confidence, 0 network errors, saved to
+`cbl.toe`. Remaining = live aesthetic check with hands in frame. See
+`docs/touchdesigner-onesurface-2026-05-27.md`.
 
 ### 1. Active Poetry Was Removed From The UI
 
