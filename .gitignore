@@ -21,6 +21,16 @@ playwright-report
 # Scratch / working dir
 tmp/
 
+# Loose teammate handoff artifacts (kept locally, NOT in git).
+# Sources were extracted into td/arduino/reference/ and "EngineeringArt CBL/".
+/*.zip
+/*.jpeg
+/*.jpg
+/Screenshot*.png
+# Teammate TouchDesigner tutorial files (binary, learning artifacts, kept local)
+/First tryout*.toe
+/Second project*.toe
+
 # TouchDesigner auto-increment backups + crash folders (keep only td/cbl.toe)
 td/*.[0-9]*.toe
 td/Backup/
