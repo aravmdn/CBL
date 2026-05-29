@@ -139,7 +139,9 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | Task | Where to change | Notes |
 |---|---|---|
 | ~~Wire TD standalone (Track B)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pose_mp` placed + wired (loads `td/pose_mp_callbacks.py`), `pose` repointed to it, `camera_in` confirmed live. Verified: head/torso 0.97/0.99, no browser. |
-| **Live aesthetic check with hands in frame** | run `td/cbl.toe` standalone, raise hands | Confirm particles gather to still hands / scatter from fast ones and the aura warps; tune gather speed / scatter threshold / glow if needed |
+| ~~Live aesthetic check~~ — **DONE 2026-05-29** | `td/cbl.toe` | Particles track both hands (gather/scatter); tuned `comp_bloom` add→screen (violet, not white-out) + `camera_level` brighter. |
+| **Background segmentation (next visual upgrade)** | new scriptTOP in `td/cbl.toe` | `mp_engine` already computes a body mask (`output_segmentation_masks=True`; `td/models/selfie_segmenter.task` bundled). Output the mask via a scriptTOP, key `camera` over `void` so only the person shows on black. Drops the room (incl. the bright ceiling "wedge") and makes the person pop. **Needs TD open.** |
+| **Visual redesign: dot-grid → seamless flowing colour** | `td/cymatics` + `aura_warp` + particle look | User wants the discrete cymatics dot-grid replaced by continuous, flowing colour (fluid/nebula feel), with the aura + orbs reading as one colour flow. Direction being scoped 2026-05-29. |
 | Arduino pulse sensor -> real BPM | TD `heartbeat` LFO → `serialCHOP` (and `src/audio/useHeartbeat.ts` for the web fallback) | Output channel must stay named `beat` |
 | Tune bowl chakra detection | `td/audio_out` (and `src/audio/useMicInput.ts` for the web fallback) | Test with the real bowl/mic and tune thresholds if detection jumps |
 
