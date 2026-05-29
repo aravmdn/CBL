@@ -25,7 +25,7 @@ def onCook(scriptOp):
     cam = op('camera_in')
     arr = cam.numpyArray(delayed=True)
     if arr is not None and arr.shape[0] > 1:
-        small = cv2.resize(arr[..., :3], (384, 216))
+        small = cv2.resize(arr[..., :3], (640, 360))  # enough detail for hand landmarks
         rgb = np.ascontiguousarray((np.flipud(small) * 255.0).astype(np.uint8))
         try:
             mp_engine.submit(rgb)
