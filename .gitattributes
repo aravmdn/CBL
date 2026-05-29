@@ -1,0 +1,17 @@
+# Keep GitHub's language stats focused on the project's own source code.
+# Vendored / generated / binary trees are excluded from the language breakdown.
+
+# Teammate MATLAB source material (reference, not app code)
+*.m linguist-language=MATLAB
+*.asv linguist-vendored
+
+# Bundled MediaPipe models for offline TouchDesigner pose tracking (binary data)
+td/models/** linguist-generated
+*.task binary linguist-generated
+
+# Vendored Python runtime for TouchDesigner (not normally committed; here for safety)
+td/pylibs/** linguist-vendored
+
+# TouchDesigner project files are binary
+*.toe binary
+*.toe.bak binary

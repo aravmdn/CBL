@@ -26,6 +26,12 @@ td/*.[0-9]*.toe
 td/Backup/
 *.toe-shm
 *.toe-wal
+td/*.toe.bak
+
+# TouchDesigner Python: vendored runtime + bytecode are NOT committed.
+# Recreate pylibs/ with: pip install -r td/requirements.txt --target td/pylibs
+td/pylibs/
+td/__pycache__/
 
 # Editor directories and files
 .vscode/*

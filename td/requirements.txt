@@ -1,0 +1,13 @@
+# Vendored Python runtime for in-TouchDesigner MediaPipe pose tracking (mp_engine.py).
+#
+# td/pylibs/ is git-ignored (it's ~286 MB). To recreate it on a fresh clone so
+# TouchDesigner's bundled Python can import these offline, install INTO that dir:
+#
+#   pip install -r td/requirements.txt --target td/pylibs
+#
+# Versions match the bundle captured 2026-05-27. pip also fetches the transitive
+# dependencies MediaPipe needs (protobuf, flatbuffers, etc.).
+mediapipe==0.10.35
+opencv-contrib-python==4.13.0.92
+numpy==2.4.6
+pillow==12.2.0
