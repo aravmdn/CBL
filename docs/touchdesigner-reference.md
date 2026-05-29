@@ -2,6 +2,11 @@
 
 Date: 2026-05-25
 
+> **Superseded (2026-05-29).** This doc records the original interpretation — "keep the
+> React/Vite web app and translate the TouchDesigner ideas onto a canvas." The project has
+> since made **TouchDesigner itself the primary system** (standalone, no browser). Kept for
+> history. Current architecture: `docs/touchdesigner-onesurface-2026-05-27.md`.
+
 ## Why This Exists
 
 The user shared this TikTok and asked to "go through this tiktok and follow the tutorial":

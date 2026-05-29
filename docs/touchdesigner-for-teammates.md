@@ -17,10 +17,11 @@ that drives living visuals** projected around them. TD is a great fit because:
 - It turns those signals directly into light: cymatics patterns, aurora ribbons,
   particles, and an aura around the body.
 
-There are two pieces running together:
-1. **The web app** (browser) — does the camera + body/hand tracking (MediaPipe).
-2. **TouchDesigner** — receives that tracking data and does the heavy GPU visuals
-   for the projector.
+**TouchDesigner runs the whole thing on one laptop and one webcam — no browser.**
+It captures the camera, does the body/hand tracking (MediaPipe, running inside TD),
+and renders all the GPU visuals for the projector. (Earlier we fed the tracking from
+the browser, but that meant a browser tab had to stay open and in focus and it fought
+TD for the camera — so TD now does the tracking itself.)
 
 ## How it's being built
 The TD network is built **AI-assisted** through Claude Code: I describe the visual
@@ -41,8 +42,8 @@ Open in TouchDesigner right now (network `/project1/cbl`):
 - **Simulated heartbeat** — a 70-BPM stand-in pulse until the Arduino arrives.
 
 **New (working as of 2026-05-28):**
-- The web app **streams the person's hand (wrist) positions into TD live** over a
-  local connection (no internet).
+- TD tracks the person's hand (wrist) positions live — originally streamed from the web
+  app, now done by TD itself (`td/mp_engine.py`), all offline.
 - A **GPU particle system** uses the hands as force fields: hold a hand **still and
   it gathers** particles toward it; **move it fast and it pushes** them away. **The
   particles now render at the hand positions** (the earlier placement bug was found
@@ -68,6 +69,7 @@ render fix). The live project on the dev laptop is the most accurate reference �
 - **Computer vision** — body/hand tracking drives the particles and aura.
 - **Visual art / projection** — TouchDesigner composes it all for the projector.
 
-This is the GPU/projector path; the web app remains the simpler laptop-only
-fallback for the demo. Full technical handoff (for resuming the build) lives in
-`docs/touchdesigner-handoff-2026-05-26.md`.
+This is the installation we present on 19 June — TouchDesigner driving the projector
+from one laptop, no browser. (The web app is kept only as a simpler fallback.) Full
+technical handoff: `docs/touchdesigner-onesurface-2026-05-27.md` (architecture) and
+`docs/touchdesigner-handoff-2026-05-26.md` (build journal).

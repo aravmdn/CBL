@@ -9,6 +9,32 @@ where to start. Full operator-level detail lives in
 
 ---
 
+## ★ DIRECTION + RECOVERY — 2026-05-29 (sixth session)
+
+**TouchDesigner is now the PRIMARY system, run standalone (no browser).** The demo is one
+surface (TD) on one webcam. Authoritative architecture written:
+`docs/touchdesigner-onesurface-2026-05-27.md`.
+
+What prompted it: a live test (web app + TD together) showed TD with a **frozen image** of
+the person (browser `getUserMedia` starved TD's camera) and required the **web tab to stay
+open and in focus** (background-tab throttling stalled the pose stream). Both are inherent to
+feeding TD from a browser → retire the bridge.
+
+The fix already existed on disk from a prior session but was **never committed or documented**:
+- `td/mp_engine.py` — MediaPipe PoseLandmarker (LIVE_STREAM async) inside TD's Python; docstring
+  literally says *"the browser pose bridge is retired."*
+- `td/pose_mp_callbacks.py` — `pose_mp` scriptCHOP: reads TD's own `camera_in`, runs the engine,
+  emits the same channels as the old bridge (`lWrist/rWrist/head/torso _u/_v/_c`, wrists `_spd`).
+- `td/models/*.task` (offline) + `td/pylibs/` (vendored runtime).
+
+This session committed the recovered engine + offline models (pylibs git-ignored, recreate via
+`td/requirements.txt`) and realigned every doc/memory to TD-primary.
+
+**Open Track B (needs TD on :44444 + a person, browser closed):** place `pose_mp` in
+`/project1/cbl`, repoint the public `pose` read point from the `pose_ws` bridge to `pose_mp`,
+confirm `camera_in` is a live `videodeviceinTOP`, verify live (camera not frozen; particles/aura
+react to real hands), then save mic-free and tune aesthetics.
+
 ## ✅ RESOLVED — 2026-05-27 (third session, post-reboot)
 
 The laptop was rebooted; TD booted healthy and the MCP responded. **The headline

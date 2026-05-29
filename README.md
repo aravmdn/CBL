@@ -1,17 +1,30 @@
 # CBL Singing Bowl Visual Installation
 
-CBL is a local browser prototype for a live installation built around a Tibetan singing bowl, a person on camera, simulated heartbeat data, cymatics, and TouchDesigner-inspired visuals.
+CBL is a live installation built around a Tibetan singing bowl, a person on camera,
+heartbeat data, cymatics, and reactive visuals.
+
+**The installation runs in TouchDesigner (`td/cbl.toe`), standalone.** For the
+19 June 2026 demo it runs as **one surface (TouchDesigner) on one webcam**: TD does
+the camera feed, MediaPipe body/hand tracking, a GPU hand-particle system, a
+hand-warped body aura, cymatics, aurora, and bowl-audio chakra detection — all on the
+GPU, from a single laptop, **with no browser open**. See
+[`docs/touchdesigner-onesurface-2026-05-27.md`](docs/touchdesigner-onesurface-2026-05-27.md).
+
+The React/Vite **web app in this repo is a secondary dev tool / fallback.** It mirrors
+the same visual language on an HTML canvas and was the original prototype; it is not
+launched at the demo and the installation does not depend on it. Most of the
+"Getting Started", "Scripts", and "Troubleshooting" sections below describe that web app.
 
 Current direction:
 
 ```text
 The bowl sound controls the color and pattern.
 The heartbeat controls the pulse.
-The camera places the aura around the person.
-The visual stage is the main artwork.
+The camera places the aura and particles around the person.
+TouchDesigner renders the artwork on the projector.
 ```
 
-Poetry is no longer part of the active app experience. The old poem client/server code is still in the repo as dormant legacy code in case the team wants it later, but the live UI does not show poems, poem buttons, or poem overlays.
+Poetry is no longer part of the experience. The old poem client/server code is still in the repo as dormant legacy code in case the team wants it later.
 
 ## Key Features
 
@@ -28,32 +41,41 @@ Poetry is no longer part of the active app experience. The old poem client/serve
 
 ## Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite
-- **Rendering**: HTML canvas 2D API
-- **Audio**: Web Audio API
-- **Camera / Pose Tracking**: `navigator.mediaDevices.getUserMedia` and `@mediapipe/tasks-vision`
-- **Backend**: Express 5, TypeScript, `tsx` for dormant legacy poem API
-- **Testing**: Vitest, React Testing Library, Supertest, Playwright
-- **Package Manager**: npm
+- **Installation (primary)**: TouchDesigner (GPU node network `/project1/cbl`), GLSL, and MediaPipe running in TD's own Python (`td/mp_engine.py`)
+- **Web app (secondary / fallback)**:
+  - **Frontend**: React 19, TypeScript, Vite
+  - **Rendering**: HTML canvas 2D API
+  - **Audio**: Web Audio API
+  - **Camera / Pose Tracking**: `navigator.mediaDevices.getUserMedia` and `@mediapipe/tasks-vision`
+  - **Backend**: Express 5, TypeScript, `tsx` for dormant legacy poem API
+  - **Testing**: Vitest, React Testing Library, Supertest, Playwright
+  - **Package Manager**: npm
 
 ## Project Structure
 
 ```text
 .
-├── docs/                         # Current status, ideation, and AI handoff notes
-├── public/
-│   └── audio/                    # Legacy sample audio assets
+├── td/                           # ★ PRIMARY: the TouchDesigner installation
+│   ├── cbl.toe                   #   the GPU network /project1/cbl (the demo)
+│   ├── mp_engine.py              #   MediaPipe pose tracking inside TD (no browser)
+│   ├── pose_mp_callbacks.py      #   pose_mp scriptCHOP (feeds TD's own camera in)
+│   ├── models/                   #   bundled MediaPipe .task models (offline)
+│   ├── aura_warp.frag            #   hand-warped body-aura shader
+│   ├── enable_bowl_audio.py      #   add the live bowl mic on the demo laptop
+│   └── requirements.txt          #   recreate pylibs/ (git-ignored runtime)
+├── docs/                         # Architecture, status, and AI handoff notes
+├── public/audio/                 # Legacy sample audio assets
 ├── scripts/                      # Legacy sample-generation helper
 ├── server/                       # Dormant legacy poem API
-├── src/
-│   ├── audio/                    # Mic, heartbeat, and audio/chakra analysis
-│   ├── camera/                   # Webcam and MediaPipe pose tracking hooks
-│   ├── components/               # Canvas camera stage
-│   ├── poetry/                   # Dormant legacy browser API client
-│   ├── App.tsx                   # Main app shell
-│   └── types.ts                  # Shared request/response and tracking types
-├── tests/
-│   └── e2e/                      # Playwright browser test
+├── src/                          # Web app (secondary / fallback)
+│   ├── audio/                    #   Mic, heartbeat, and audio/chakra analysis
+│   ├── camera/                   #   Webcam and MediaPipe pose tracking hooks
+│   ├── components/               #   Canvas camera stage
+│   ├── net/                      #   usePoseStream — retired web→TD pose bridge
+│   ├── poetry/                   #   Dormant legacy browser API client
+│   ├── App.tsx                   #   Main app shell
+│   └── types.ts                  #   Shared request/response and tracking types
+├── tests/e2e/                    # Playwright browser test
 ├── CLAUDE.md                     # AI handoff architecture note
 ├── package.json                  # Scripts and dependencies
 └── vite.config.ts                # Vite dev server and test config
@@ -61,16 +83,19 @@ Poetry is no longer part of the active app experience. The old poem client/serve
 
 ## Current Design Direction
 
-The latest project pivot removes poetry from the live demo and puts the focus on the visual installation.
+The project removed poetry and now builds the installation **in TouchDesigner**, running
+standalone on one webcam. The web app is kept as a fallback.
 
 Plain group explanation:
 
 ```text
 The MATLAB part analyzes the bowl sound.
-The web app turns that sound into live visuals around the person.
+TouchDesigner turns that sound — plus the live camera and body tracking —
+into the visuals projected around the person.
 ```
 
-The final demo should feel like a polished audiovisual artwork, not a text-generation app.
+The final demo should feel like a polished audiovisual artwork driven live by the bowl,
+the heartbeat, and the person's movement.
 
 ## Teammate MATLAB Integration
 
@@ -103,26 +128,57 @@ The current stage follows ideas from this TikTok reference:
 - https://vm.tiktok.com/ZGdHggUDC/
 - resolved: https://www.tiktok.com/@studio.kashi/video/7617655149653167390
 
-The TikTok recommends learning TouchDesigner through white abstract visuals, audio-reactive bloom particles, and hand tracking. This project keeps the React/Vite web-app architecture and translates those ideas into the canvas stage.
+The TikTok recommends learning TouchDesigner through white abstract visuals, audio-reactive bloom particles, and hand tracking. The web-app version translated those ideas onto an HTML canvas; **the installation now builds them in TouchDesigner itself** (the learning path realized in the real tool). See [`docs/touchdesigner-onesurface-2026-05-27.md`](docs/touchdesigner-onesurface-2026-05-27.md).
 
-## Prerequisites
+## Run The Installation (TouchDesigner — this is the demo)
+
+Standalone, no browser. On a machine with TouchDesigner (2025+) installed and the webcam connected:
+
+```powershell
+& "C:\Program Files\Derivative\TouchDesigner\bin\TouchDesigner.exe" "C:\projects\CBL\td\cbl.toe"
+```
+
+- Stand in front of the webcam — TD does its own MediaPipe pose tracking; particles
+  gather to still hands / scatter from fast ones, and the aura warps toward your hands.
+- `master_out` (1280×720) is the projector feed.
+- On the demo laptop, enable the live bowl mic by pasting `td/enable_bowl_audio.py` into
+  the Textport. Keep `cbl.toe` saved **without** a live audio op (it can hang TD — see
+  `memory/touchdesigner_setup.md`).
+- MediaPipe models are bundled in `td/models/` (offline-safe). The Python runtime
+  `td/pylibs/` is git-ignored; recreate it with
+  `pip install -r td/requirements.txt --target td/pylibs`.
+
+Full architecture + boot-hang reboot rule:
+[`docs/touchdesigner-onesurface-2026-05-27.md`](docs/touchdesigner-onesurface-2026-05-27.md)
+and `td/README.md`.
+
+> **Track B (still open):** the committed `cbl.toe` still uses the retired browser pose
+> bridge as its source. Swapping it to the TD-native `pose_mp` scriptCHOP is the last
+> wiring step — see the one-surface doc.
+
+## The Web App (secondary / fallback)
+
+The rest of this README covers the React/Vite web app: the original prototype, now a dev
+tool / fallback that mirrors the visuals on a canvas.
+
+### Prerequisites
 
 - Node.js 24 or newer
 - npm 11 or newer
 - A webcam for the full interactive experience
 - A microphone for bowl input
 
-No API key is required for the active visual demo.
+No API key is required.
 
-## Getting Started
+### Getting Started
 
-### 1. Install Dependencies
+#### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Start The App
+#### 2. Start The App
 
 ```bash
 npm run dev

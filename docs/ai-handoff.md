@@ -1,36 +1,40 @@
 # AI Handoff Notes
 
-Date: 2026-05-28
+Date: 2026-05-29
 
 This file is for Claude, Codex, or another coding assistant picking up the CBL project.
 
 ## Read These First
 
-1. `docs/current-status.md`
-2. `docs/matlab-integration-ideation.md`
-3. `docs/touchdesigner-reference.md`
-4. `CLAUDE.md`
+1. `docs/touchdesigner-onesurface-2026-05-27.md` — **the authoritative architecture (TD-primary, standalone).**
+2. `CLAUDE.md`
+3. `docs/touchdesigner-resume-2026-05-27.md` — running TD build log / where to continue.
+4. `docs/current-status.md`
 5. `README.md`
 
-Important: the current direction is visual-first. **Poetry is permanently removed** (confirmed Meeting 5.2, 2026-05-22 — "poetry is off the table"). Do not treat it as part of the active product under any circumstances unless the user explicitly says otherwise.
+Important:
+- **TouchDesigner is the PRIMARY system.** The installation is `td/cbl.toe`, run standalone on
+  one webcam with no browser. The React/Vite web app is a secondary dev tool / fallback. Do not
+  re-assume the web app is the deliverable.
+- **Poetry is permanently removed** (confirmed Meeting 5.2, 2026-05-22). Do not treat it as part
+  of the active product unless the user explicitly says otherwise.
 
 ## Project Direction
 
-The app is now aimed at a live visual installation:
+A live visual installation **rendered in TouchDesigner**:
 
 ```text
-Tibetan singing bowl + person on camera + heartbeat + TouchDesigner-style visuals
+Tibetan singing bowl + person on camera + heartbeat -> TouchDesigner GPU visuals -> projector
 ```
 
-The intended final interaction:
+The intended final interaction (all in TD, no browser):
 
 ```text
-person stands/sits in front of camera
--> bowl sound is captured by microphone
--> app detects bowl frequencies and chakra color
--> aura/cymatics/bloom respond visually
--> heartbeat controls pulse
--> body tracking places the effects around the person
+person stands/sits in front of the webcam
+-> TD captures the camera and runs MediaPipe pose tracking itself
+-> bowl mic -> chakra color; heartbeat -> pulse
+-> hands pull glowing GPU particles; aura warps toward the hands
+-> cymatics + aurora + camera composite to master_out on the projector
 ```
 
 ## Latest User Decision
@@ -71,10 +75,12 @@ To use it in a session:
 3. Run `/touchdesigner` in Claude Code to load the skill.
 4. Then ask Claude to build/edit TD networks in natural language.
 
-As of 2026-05-28, **`td/cbl.toe` is the full reactive build** (hand-particle feature, aura
-warp, camera/cymatics/aurora layers, composited to `master_out`). The previous simpler grid
-file is backed up locally as `td/cbl.toe.bak` — do not delete until the live test passes.
-The TD build is now a real second visual path for the projector, not just a prototyping toy.
+As of 2026-05-29, **`td/cbl.toe` is the primary output path** — the full reactive build
+(hand-particle feature, aura warp, camera/cymatics/aurora composited to `master_out`). The
+previous simpler grid file is backed up locally as `td/cbl.toe.bak` (git-ignored) — do not
+delete until the live test passes. The TD-native pose engine (`td/mp_engine.py` +
+`td/pose_mp_callbacks.py`, recovered/committed 2026-05-29) makes it run with no browser; the
+open step is wiring `pose_mp` into the `.toe` (Track B — see the one-surface doc).
 
 ## TouchDesigner Hand-Particle Feature (2026-05-26 → 2026-05-28)
 

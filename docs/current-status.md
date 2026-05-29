@@ -1,6 +1,6 @@
 # Current Status
 
-Date: 2026-05-28
+Date: 2026-05-29
 
 ## Repository State
 
@@ -16,23 +16,51 @@ The `EngineeringArt CBL/` folder and zip are teammate work. They contain MATLAB 
 
 ## Latest Direction Update
 
+**TouchDesigner is the primary system, standalone (decided 2026-05-29).** The installation
+runs as one surface (TD) on one webcam — no browser at the demo. The React/Vite web app is a
+kept-but-secondary dev tool / fallback. Authoritative architecture:
+`docs/touchdesigner-onesurface-2026-05-27.md`.
+
 Poetry is permanently off the table (confirmed Meeting 5.2, 2026-05-22).
 
 The current project focus is:
 
 ```text
-visual installation quality + report + physical hardware + bowl sound + body tracking
+TouchDesigner installation quality + report + physical hardware + bowl sound + body tracking
 ```
 
 Group is now split: Joris/Henk/Alice writing the report; Arav/Mahiraa/Alejandra on code. Bowl has been ordered. Better Arduino and black display cloth also being sourced.
 
-Old poem-related code can stay as dormant legacy code for now, but new UI work should not build around poems.
+Old poem-related code can stay as dormant legacy code for now, but new work should not build around poems.
 
-## What The App Does Now
+### Live-test findings (recorded 2026-05-29)
 
-The app is a React/Vite browser prototype for an interactive visual installation.
+A live test ran the web app and TD together, with TD showing the hand effects. Two problems
+surfaced — both inherent to feeding TD from a browser, and both removed by the standalone design:
 
-Current experience:
+- **TD showed a frozen image of the person.** The browser's `getUserMedia` held the single
+  webcam, starving TD's own camera capture (effects still reacted; the camera frame was stale).
+- **The web app tab had to stay open and in focus.** Browsers throttle background tabs, so the
+  pose stream to TD went stale whenever the tab lost focus.
+
+Fix = TD owns the camera and runs its own pose tracking (the recovered `td/mp_engine.py` +
+`td/pose_mp_callbacks.py`); the browser is out of the loop. See the one-surface doc.
+
+## What The System Does Now
+
+### TouchDesigner (primary — the installation)
+
+`td/cbl.toe` (network `/project1/cbl`) renders the installation on the GPU: deep-void
+background, the live camera, chakra-colored cymatics, BPM-tinted aurora ribbons, a
+2048-particle GPU system that gathers to still hands / scatters from fast ones, and a
+hand-warped body aura — composited to `master_out` for the projector. With the recovered
+TD-native pose engine (`td/mp_engine.py` + `td/pose_mp_callbacks.py`, bundled offline
+models) it runs **standalone on one webcam, no browser**. See `§0b` below and the
+one-surface doc.
+
+### Web app (secondary — dev tool / fallback)
+
+The React/Vite app mirrors the same visual language on an HTML canvas. Current experience:
 
 - Webcam feed appears on a canvas (mirrored for selfie view).
 - MediaPipe pose tracking finds the person; landmarks smoothed via OneEuroFilter so the aura glides.
@@ -121,9 +149,17 @@ Three latent bugs were fixed via a synthetic-pose smoke test on 2026-05-28 (comm
 unbound (scatter-from-fast-hands and audio energy chaos noise were dead), and
 `root.time.play` was False (the feedback shader could not iterate). With these fixed,
 synthetic hands at u=0.30 and u=0.70 produced **1031 particles toward L hand, 1006 toward
-R hand, 0 at center** — exactly what the shader intends. Live test with a person in front
-of the camera is still pending. See `docs/touchdesigner-resume-2026-05-27.md` for the
-running TD log.
+R hand, 0 at center** — exactly what the shader intends. See
+`docs/touchdesigner-resume-2026-05-27.md` for the running TD log.
+
+**Standalone pose engine (recovered + committed 2026-05-29).** `td/mp_engine.py` runs
+MediaPipe PoseLandmarker (LIVE_STREAM async) inside TD's own Python; `td/pose_mp_callbacks.py`
+is the `pose_mp` scriptCHOP that reads TD's own `camera_in`, runs the engine, and emits the
+same channels as the retired browser bridge. Models are bundled in `td/models/` (offline);
+the runtime `td/pylibs/` is git-ignored (recreate via `td/requirements.txt`). This is what
+lets TD run with **no browser**. Built in a prior session but never committed — now in git.
+**Open Track B:** place `pose_mp` in `cbl.toe` and repoint the public `pose` read point to it
+(needs TD open + a person, browser closed). See `docs/touchdesigner-onesurface-2026-05-27.md`.
 
 ### 1. Active Poetry Was Removed From The UI
 
@@ -195,8 +231,8 @@ The integration is covered by automated tests, but the frequency thresholds and 
 
 ## Recommended Next Development Order
 
-1. Test with the real bowl and mic.
-2. Tune `MIN_PEAK_FREQUENCY`, `MAX_PEAK_FREQUENCY`, `PEAK_SPACING_HZ`, and `MIN_DOMINANT_MAGNITUDE` in `src/audio/useMicInput.ts` if chakra detection is unstable.
-3. Test wrist tracking with hands visible in the camera.
-4. Tune the TouchDesigner-inspired visual intensity in `src/components/CameraStage.tsx` if the stage still looks too subtle.
+1. **Track B — wire TD standalone:** place the `pose_mp` scriptCHOP in `cbl.toe`, repoint the public `pose` read point from the `pose_ws` bridge to `pose_mp`, confirm `camera_in` is a live `videodeviceinTOP`. (Needs TD open on MCP :44444.)
+2. **Live test with a person, browser closed:** confirm the camera is live (not frozen) and particles/aura react to real hands; then tune gather speed, scatter threshold, and glow.
+3. Enable + tune the live bowl mic on the demo laptop (`td/enable_bowl_audio.py`); test chakra stability with the real bowl.
+4. (Web fallback only, if needed) tune `MIN_PEAK_FREQUENCY` / `MAX_PEAK_FREQUENCY` / `PEAK_SPACING_HZ` / `MIN_DOMINANT_MAGNITUDE` in `src/audio/useMicInput.ts` and visual intensity in `src/components/CameraStage.tsx`.
 5. Keep `README.md` and `docs/` updated after demo-room testing.

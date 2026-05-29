@@ -1,11 +1,11 @@
 # CBL TouchDesigner Project
 
-`cbl.toe` is the GPU visual installation built for the Creative Bowl Lab demo.
-It mirrors the React/Vite app's visual language (deep void + chakra-colored
-cymatics + BPM-tinted aurora) and adds a GPU **hand-particle system** plus a
-**hand-warped body aura** driven by the live web-app pose stream — all rendered
-on the GPU for projector output. The earlier simpler grid version of cbl.toe is
-backed up locally as `cbl.toe.bak`.
+`cbl.toe` is the GPU visual installation built for the Creative Bowl Lab demo — and
+**the primary system** for 19 June. It does the deep-void + chakra-colored cymatics +
+BPM-tinted aurora, plus a GPU **hand-particle system** and a **hand-warped body aura**,
+all on the GPU for projector output. It is designed to run **standalone on one webcam
+with no browser** (see `pose_mp` below and `docs/touchdesigner-onesurface-2026-05-27.md`).
+The earlier simpler grid version of cbl.toe is backed up locally as `cbl.toe.bak`.
 
 ## Open it
 
@@ -36,20 +36,29 @@ The shader uniforms on `cymatics` / `aurora` / `aura_warp` / `p_sim` are
 expressions reading `pose`, `audio_out`, and `heartbeat`, so the whole stage
 reacts to sound + pulse + hands with no extra wiring.
 
-## Enable the hand-particle feature live
+## Pose source: standalone (the demo) vs. browser bridge (retired)
 
-Open `td/cbl.toe` in TouchDesigner (timeline plays on open). Then start the web app
-with the pose bridge on:
+Two ways to drive the `pose` channels that the particles + aura read:
 
-```powershell
-$env:VITE_TD_BRIDGE = '1'; npm run dev
-```
+1. **Standalone, TD-native (the demo path).** TD does its own MediaPipe pose tracking:
+   `td/mp_engine.py` (PoseLandmarker, LIVE_STREAM async) + the `pose_mp` scriptCHOP
+   (`td/pose_mp_callbacks.py`) reading TD's own `camera_in`. Models bundled in
+   `td/models/` (offline). No browser, no WebSocket, no camera contention. Recreate the
+   Python runtime once per clone: `pip install -r td/requirements.txt --target td/pylibs`.
 
-(or in the browser devtools console: `localStorage['td-bridge']='1'`, then reload).
+   **Open Track B:** the `pose_mp` scriptCHOP isn't placed in `cbl.toe` yet — place it and
+   repoint the public `pose` read point from the `pose_ws` chain to `pose_mp` (it emits the
+   same channel names, so downstream uniforms don't change). See
+   `docs/touchdesigner-onesurface-2026-05-27.md`.
 
-Open http://localhost:5173, allow camera. The TD `pose_ws` DAT should show 1
-connected client, the `pose` CHOP channels should change as you move your hands,
-and `master_out` should show the particles gathering/scattering at the wrists.
+2. **Browser bridge (retired fallback).** Open `td/cbl.toe`, then:
+   ```powershell
+   $env:VITE_TD_BRIDGE = '1'; npm run dev
+   ```
+   (or in devtools: `localStorage['td-bridge']='1'`, reload). Open http://localhost:5173,
+   allow camera; `pose_ws` shows 1 client and the `pose` channels track your hands. **This
+   is retired for the demo** — it requires the browser to stay open *and in focus* and it
+   competes with TD for the webcam.
 
 ## Enable the live bowl mic
 
