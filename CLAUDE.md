@@ -133,6 +133,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 - [x] claude-touchdesigner MCP plugin installed (v0.1.6) — see `docs/touchdesigner-mcp.md`
 - [x] TouchDesigner reactive build (`td/cbl.toe`) — 2048-particle GPU sim that gathers/scatters from wrists, hand-warped aura, composited with camera/cymatics/aurora to `master_out`. Smoke-tested 2026-05-28 with synthetic pose: 1031/2048 to L hand, 1006/2048 to R hand, 0 at center. See `docs/touchdesigner-resume-2026-05-27.md`.
 - [x] **TD-native pose engine recovered + committed (2026-05-29)** — `td/mp_engine.py` + `td/pose_mp_callbacks.py` run MediaPipe inside TD's Python with bundled offline models; this is what makes TD self-sufficient (no browser). Built in a prior session, never committed; now in git. See `docs/touchdesigner-onesurface-2026-05-27.md`.
+- [x] **Seamless flowing-colour redesign (2026-05-29)** — smooth cymatics (no dot-grid), liquid/ink feedback flow (`flow`/`flow_fb`, advect+inject, composited over the camera so the person stays sharp), and 10-fingertip glowing orbs (`orbs` + `hands_mp` via `td/hand_mp_callbacks.py` + hand_landmarker) that trail/dissolve into the flow. Colour driven by bowl hue + heartbeat + ambient drift. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`.
 
 ## Pending
 
@@ -141,7 +142,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | ~~Wire TD standalone (Track B)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pose_mp` placed + wired (loads `td/pose_mp_callbacks.py`), `pose` repointed to it, `camera_in` confirmed live. Verified: head/torso 0.97/0.99, no browser. |
 | ~~Live aesthetic check~~ — **DONE 2026-05-29** | `td/cbl.toe` | Particles track both hands (gather/scatter); tuned `comp_bloom` add→screen (violet, not white-out) + `camera_level` brighter. |
 | **Background segmentation (next visual upgrade)** | new scriptTOP in `td/cbl.toe` | `mp_engine` already computes a body mask (`output_segmentation_masks=True`; `td/models/selfie_segmenter.task` bundled). Output the mask via a scriptTOP, key `camera` over `void` so only the person shows on black. Drops the room (incl. the bright ceiling "wedge") and makes the person pop. **Needs TD open.** |
-| **Visual redesign: dot-grid → seamless flowing colour** | `td/cymatics` shader + feedback flow + fingertip orbs | Spec set 2026-05-29: keep cymatics physics but render SMOOTH; liquid/ink flow (feedback advection); colour driven by bowl hue + heartbeat pulse + ambient drift; orbs move to **fingertips** (Pose index-finger proxy, or `hand_landmarker.task` for all five). Full spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`. **Needs TD open.** |
+| ~~Visual redesign: dot-grid → seamless flowing colour~~ — **DONE 2026-05-29** | `td/cbl.toe` | Smooth cymatics + liquid/ink feedback flow + 10-fingertip glowing orbs (hand_landmarker) blended into the flow. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`. |
 | Arduino pulse sensor -> real BPM | TD `heartbeat` LFO → `serialCHOP` (and `src/audio/useHeartbeat.ts` for the web fallback) | Output channel must stay named `beat` |
 | Tune bowl chakra detection | `td/audio_out` (and `src/audio/useMicInput.ts` for the web fallback) | Test with the real bowl/mic and tune thresholds if detection jumps |
 

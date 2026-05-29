@@ -1,7 +1,12 @@
 # TouchDesigner — Visual Redesign Spec: "seamless flow of colours"
 
-_Direction set by Arav, 2026-05-29. Not yet built — this is the spec for the next TD
-session. Current look = discrete violet **cymatics dot-grid** + ribbons + hand orbs._
+_Direction set by Arav, 2026-05-29 — **BUILT the same day and verified live.** Kept as the
+record of intent + how it was implemented._
+
+> **STATUS: DONE (2026-05-29).** Smooth cymatics, liquid/ink feedback flow, and 10-fingertip
+> glowing orbs (hand_landmarker) are all in `td/cbl.toe`. Final tuning: orb radius 0.022, flow
+> warp 0.018 / fade 0.91. Fingertips chosen = **10 (hand_landmarker)**. Implementation notes
+> below describe what was built.
 
 ## The look we're going for
 
