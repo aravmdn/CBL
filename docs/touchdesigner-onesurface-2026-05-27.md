@@ -101,11 +101,20 @@ the particle/aura build in `td/cbl.toe` (smoke-tested with synthetic pose:
    present, `pose` head conf **0.966** / torso conf **0.995** straight from `camera_in`.
    Network error count 0; `master_out` renders clean. Saved to `td/cbl.toe` (23.4 KB).
 
+**Live aesthetic check — DONE 2026-05-29** (captured `master_out` frames while a person moved):
+particles track both hands (gather when still, scatter when moving) and the aura warps. Two
+tweaks applied + saved: `comp_bloom` `add → screen` (the additive sum of ~1000 violet particles
+was clipping to white at a still hand; screen caps at 1.0 so it reads violet), and `camera_level`
+brightness `0.7 → 0.95` / gamma `1.2 → 1.35` so the person is clearly visible.
+
 **Remaining:**
-- **Live aesthetic check (needs hands in frame):** confirm particles gather to still hands /
-  scatter from fast ones and the aura warps; tune gather speed / scatter threshold / glow.
-- On the demo laptop, enable the bowl mic at runtime (`td/enable_bowl_audio.py`); keep the
-  saved `.toe` mic-free.
+- **Background drops out (recommended next visual upgrade):** the camera shows the whole room,
+  so the bright slanted ceiling reads as a lighter wedge top-left. `mp_engine` already computes a
+  body segmentation mask (`output_segmentation_masks=True`; `td/models/selfie_segmenter.task`
+  bundled) — output it via a scriptTOP and key the camera over `void` so only the person shows on
+  black. Fixes the wedge and makes the person pop, in one move.
+- On the demo laptop, enable the bowl mic at runtime (`td/enable_bowl_audio.py`); keep the saved
+  `.toe` mic-free.
 
 The running operator-level log is `docs/touchdesigner-resume-2026-05-27.md`; the
 operator map is `td/README.md`.
