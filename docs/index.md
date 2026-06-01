@@ -17,6 +17,7 @@ This folder is a handoff/reference area for CBL. It exists so the project can be
 - [AI handoff](./ai-handoff.md): concise context for Claude/Codex before making future changes.
 - [MATLAB integration ideation](./matlab-integration-ideation.md): how the teammate MATLAB work connects to the project.
 - [TouchDesigner reference handoff](./touchdesigner-reference.md): the original TikTok-driven canvas pass (now superseded by the TD-primary direction).
+- [Chladni particle plate — breakdown, source paper & graft plan](./touchdesigner-chladni-particles-2026-06-01.md): full rebuild of the Factory Settings "Audio Reactive Chladni Plate" video, the research paper behind it (Rossing 1982 via Paul Bourke; Ritz 1909 for the figure formula), and a concrete plan to graft the normal-map velocity attractor onto `cbl.toe`. Supports Alejandra's "Chladni Formula" task.
 
 ## One Sentence Project Summary
 
