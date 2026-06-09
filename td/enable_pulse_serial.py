@@ -35,7 +35,10 @@
 # BEFORE SAVING on this laptop: call disable_pulse_serial() to release the port.
 
 CBL = '/project1/cbl'
-PORT = 'COM5'   # <-- EDIT to your Arduino's COM port
+PORT = 'COM7'   # <-- EDIT to your Arduino's COM port. The board shows up in
+                #     Device Manager as "USB Serial Device (COMxx)". On Arav's
+                #     laptop it is COM7 (COM3-6 are Bluetooth links, NOT the
+                #     Arduino). Re-plugging can re-enumerate the number.
 
 
 def build_pulse_chain():
@@ -87,6 +90,13 @@ def build_pulse_chain():
     ser.par.baudrate = 115200
     ser.par.stopbits = 1
     ser.par.format = 'perline'
+    # Native-USB boards (the MAX3010x rig enumerates as a generic "USB Serial
+    # Device") discard their serial TX until the host raises BOTH DTR and RTS.
+    # DTR alone gets zero bytes; with RTS enabled too, lines flow. Verified live
+    # 2026-06-09 on COM7. The Arduino Serial Monitor raises both, which is why it
+    # "works there but not in TD" if RTS is left disabled.
+    ser.par.dtr = 'enable'
+    ser.par.rts = 'enable'
     ser.par.callbacks = 'pulse_callbacks'
 
     # heartbeat frequency follows smoothed BPM (floor keeps the pulse alive)
