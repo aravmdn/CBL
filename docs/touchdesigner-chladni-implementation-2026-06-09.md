@@ -198,6 +198,32 @@ A/B with the bowl faked bright: gain 0 = smooth ambient ink; gain 0.16 = the flo
 organises into the diamond-cell Chladni figure (rings inside each cell). Network error-free,
 quiet state unchanged (gated), saved mic-free.
 
+### Live-test status (2026-06-09) — ⏸️ RESUME HERE
+Tested with the live **computer mic** (`enable_bowl_audio.py` → `bowl_mic → spectrum →
+audio_out`).
+- ✅ **Frequency → figure CONFIRMED live:** a played tone read `peakHz=963 Hz → n=8, m=11`,
+  `chakra=6`, `hue=0.80`. The figure is genuinely chosen by the detected **pitch**, as designed
+  (not by loudness).
+- ⛔ **Snap / energy calibration NOT yet verified** — testing happened in a loud room, so the
+  mic picked up ambient sound and a clean sustained bowl tone couldn't be isolated. Observed
+  `energy ≈ 0.007` (near-silent) → gain ≈ 0.0018 (off). So the bowl-ring snap was never seen
+  with a real signal.
+
+**Next session (quiet room + the real bowl):**
+1. Re-enable the mic: paste `td/enable_bowl_audio.py` into the TD Textport.
+2. Play a sustained tone; read `op('/project1/cbl/audio_out')['energy']` live to learn the
+   **actual energy range** a real bowl produces on this mic.
+3. Recalibrate the gain expression on `flow.vec1valuex` (currently
+   `min(0.18, max(0.0, audio_out['energy'])*0.25)`) so a normal strike reaches ~0.12–0.18 gain
+   — almost certainly needs a **larger multiplier** if the laptop-mic energy is small.
+4. If `energy` is jumpy, insert a `lagCHOP` on `audio_out['energy']` before the gain for a
+   smooth snap-in / relax-out.
+5. Confirm end-to-end: strike the bowl → ink snaps onto the figure; quiet → relaxes.
+
+⚠️ The live mic is **runtime-only**. Do NOT save `cbl.toe` while it's enabled (audio-device
+save-hang); run `disable_bowl_audio()` first. The committed `cbl.toe` is mic-free and current,
+so it's safe to just close TD **without saving**.
+
 ---
 
 ## 8. For the report

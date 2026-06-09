@@ -153,7 +153,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | ~~Arduino pulse sensor → real BPM (TD software)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pulse_serial`→`pulse_callbacks`→`bpm_raw`→`bpm_smooth`→`heartbeat.frequency`. `beat` channel unchanged. Serial OFF in saved file; enable via `td/enable_pulse_serial.py`. |
 | **Arduino: flash firmware + verify live BPM** (hardware) | `td/arduino/heartbeat_stream/` + demo laptop | Flash `heartbeat_stream.ino` (SparkFun MAX3010x lib), set COM port in `enable_pulse_serial.py`, confirm `heartbeat` LFO tracks real pulse. Staging: one hand on sensor, other hand free for camera. Web fallback (`src/audio/useHeartbeat.ts`) still uses the sim. |
 | Tune bowl chakra detection | `td/audio_out` (and `src/audio/useMicInput.ts` for the web fallback) | Test with the real bowl/mic and tune thresholds if detection jumps |
-| **Tune Chladni flow snap with the real bowl** | `td/cbl.toe` (`flow.uChladni.x` gain expr; optional `lagCHOP` on `audio_out['energy']`) | Option B is gated by bowl energy; verify the snap-in/relax feels right with the live bowl and add a lagCHOP if it flickers. |
+| **Calibrate Chladni flow snap with the real bowl (quiet room)** | `td/cbl.toe` (`flow.vec1valuex` gain expr; optional `lagCHOP` on `audio_out['energy']`) | Live-tested 2026-06-09: **frequency→figure confirmed** (963 Hz → n8/m11), but **energy→snap NOT calibrated** (loud room, mic energy ≈0.007). Next: read real-bowl energy range, raise the `*0.25` multiplier so a strike reaches ~0.12–0.18 gain, add lagCHOP if jumpy. Steps in chladni-implementation doc §7 "Live-test status". |
 
 ## Teammate Contributions (`EngineeringArt CBL/`)
 
