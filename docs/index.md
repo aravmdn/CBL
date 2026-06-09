@@ -18,6 +18,7 @@ This folder is a handoff/reference area for CBL. It exists so the project can be
 - [MATLAB integration ideation](./matlab-integration-ideation.md): how the teammate MATLAB work connects to the project.
 - [TouchDesigner reference handoff](./touchdesigner-reference.md): the original TikTok-driven canvas pass (now superseded by the TD-primary direction).
 - [Chladni particle plate — breakdown, source paper & graft plan](./touchdesigner-chladni-particles-2026-06-01.md): full rebuild of the Factory Settings "Audio Reactive Chladni Plate" video, the research paper behind it (Rossing 1982 via Paul Bourke; Ritz 1909 for the figure formula), and a concrete plan to graft the normal-map velocity attractor onto `cbl.toe`. Supports Alejandra's "Chladni Formula" task.
+- [**Chladni math — IMPLEMENTED (2026-06-09)**](./touchdesigner-chladni-implementation-2026-06-09.md): what was actually built — the `cymatics` shader now renders the true square-plate Chladni figure (Ritz superposition) driven by bowl pitch → `(n,m)` and heartbeat → breathing. Plain-language maths, parameter mapping, tuning guide, and the Option B (particles-on-nodal-lines) next step.
 
 ## One Sentence Project Summary
 

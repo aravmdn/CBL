@@ -285,6 +285,13 @@ existing network as possible. Two options, smallest-first.
   `vecNname / vecNvaluex` expression pattern (see `aura_warp.frag` header). **Follow it.**
 
 ### Option A — *Cheapest:* upgrade `cymatics` to the true square-plate figure (no particles)
+
+> **✅ DONE 2026-06-09.** Built and saved in `cbl.toe`. The `cymatics` shader now renders the
+> two-mode superposition; `uMode = (n, m, breathScale, phase)` is bound on vec3, driven by
+> bowl `peakHz → (n,m)` and `heartbeat → breathing`. See
+> **`docs/touchdesigner-chladni-implementation-2026-06-09.md`** for the as-built details,
+> parameter mapping, and tuning guide.
+
 A ~10-line shader edit, immediately better-looking, zero new operators.
 
 1. In the `cymatics` glslTOP, replace `sin(kx)·sin(ky)` with the **two-mode superposition**:
