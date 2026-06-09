@@ -64,7 +64,9 @@ cymatics (glslTOP)            - chakra-colored sin(kx)*sin(ky) interference
 aurora (glslTOP)              - 4 BPM-tinted light ribbons
 audio_out (scriptCHOP)        - bowl spectrum -> nearest Solfeggio (396–963 Hz) -> peakHz/hue/energy/chakra
 heartbeat (lfoCHOP)           - ~70 BPM sim pulse until the Arduino arrives
-composite -> master_out       - void -> camera -> +cymatics -> +aurora -> +particles -> screen aura -> projector
+composite -> master_out       - void -> camera -> +flow(cymatics+aurora+orbs feedback) -> +aura -> +fingertip orbs -> screen
+                                (NOTE: the discrete p_sim/p_render particles are DORMANT — not composited; the
+                                 flowing-ink layer now carries the Chladni effect. See chladni-implementation doc.)
 ```
 
 NOTE: as of 2026-05-29 `cbl.toe` sources `pose` from the **TD-native `pose_mp`** scriptCHOP
@@ -137,6 +139,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 - [x] **TD-native pose engine recovered + committed (2026-05-29)** — `td/mp_engine.py` + `td/pose_mp_callbacks.py` run MediaPipe inside TD's Python with bundled offline models; this is what makes TD self-sufficient (no browser). Built in a prior session, never committed; now in git. See `docs/touchdesigner-onesurface-2026-05-27.md`.
 - [x] **Seamless flowing-colour redesign (2026-05-29)** — smooth cymatics (no dot-grid), liquid/ink feedback flow (`flow`/`flow_fb`, advect+inject, composited over the camera so the person stays sharp), and 10-fingertip glowing orbs (`orbs` + `hands_mp` via `td/hand_mp_callbacks.py` + hand_landmarker) that trail/dissolve into the flow. Colour driven by bowl hue + heartbeat + ambient drift. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`.
 - [x] **Chladni square-plate math implemented in `cymatics` (2026-06-09)** — replaced the old separable `sin(kx)·sin(ky)` grid with the true two-mode superposition `cos(nπx/L)cos(mπy/L) − cos(mπx/L)cos(nπy/L)` (Ritz 1909), rendering glowing nodal lines ("sand on the plate"). `uMode=(n,m,breathScale,phase)` on vec3: bowl `peakHz → (n,m)`, `heartbeat → breathing`, chakra hue unchanged. Verified live (figures at (3,5)/(5,8) correct), network error-free, saved mic-free. This is Option A of the Chladni graft plan. Spec: `docs/touchdesigner-chladni-implementation-2026-06-09.md`.
+- [x] **Chladni Option B — flowing ink settles on the nodal lines (2026-06-09)** — the video's headline effect, done as a flow variant (not discrete particles, per choice). New `chladni_height → chladni_thr → chladni_nrm` (Normal TOP velocity field) feeds the `flow` shader; `uChladni.x` gain (gated by bowl `energy`) advects the flowing ink onto the nodal lines and suppresses the ambient warp so the figure reads. Bowl ring → ink snaps into the Chladni figure; quiet → ambient flow (fully gated/reversible). A/B-verified live, error-free, saved mic-free. Spec: chladni-implementation doc §7.
 - [x] **Live heartbeat → TD wired in software (2026-05-29)** — teammate Arduino pulse-sensor work integrated. New chain in `cbl.toe`: `pulse_serial` (serialDAT, **OFF** in the saved file) → `pulse_callbacks` (tolerant parser, accepts both teammate sketches' formats) → `bpm_raw` (constantCHOP, holds last good BPM, resting default 70) → `bpm_smooth` (lagCHOP) → `heartbeat.frequency = max(0.3, bpm_smooth['bpm']/60)`. All 5 existing `beat` consumers untouched; **auto-falls-back to 70 BPM when no sensor**. Verified by injecting fake serial lines (parse + junk-rejection confirmed). Demo-laptop enable: `td/enable_pulse_serial.py`. Recommended firmware (merge of both sketches, clean continuous output): `td/arduino/heartbeat_stream/heartbeat_stream.ino`. **Still pending: physical sensor flash + live BPM verification.**
 
 ## Pending
@@ -149,8 +152,8 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | ~~Visual redesign: dot-grid → seamless flowing colour~~ — **DONE 2026-05-29** | `td/cbl.toe` | Smooth cymatics + liquid/ink feedback flow + 10-fingertip glowing orbs (hand_landmarker) blended into the flow. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`. |
 | ~~Arduino pulse sensor → real BPM (TD software)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pulse_serial`→`pulse_callbacks`→`bpm_raw`→`bpm_smooth`→`heartbeat.frequency`. `beat` channel unchanged. Serial OFF in saved file; enable via `td/enable_pulse_serial.py`. |
 | **Arduino: flash firmware + verify live BPM** (hardware) | `td/arduino/heartbeat_stream/` + demo laptop | Flash `heartbeat_stream.ino` (SparkFun MAX3010x lib), set COM port in `enable_pulse_serial.py`, confirm `heartbeat` LFO tracks real pulse. Staging: one hand on sensor, other hand free for camera. Web fallback (`src/audio/useHeartbeat.ts`) still uses the sim. |
-| **Chladni Option B: particles collect on the nodal lines** | `td/cbl.toe` (`cymatics`→Threshold→Normal TOP; force into `p_sim`) | The video's headline effect. Add a normal-map velocity force to the existing `p_sim` so particles migrate onto the Chladni nodal lines; crossfade vs hand gather/scatter ("bowl arranges, hands disturb"). Plan: `docs/touchdesigner-chladni-particles-2026-06-01.md` §6 Option B. ~half a day. |
 | Tune bowl chakra detection | `td/audio_out` (and `src/audio/useMicInput.ts` for the web fallback) | Test with the real bowl/mic and tune thresholds if detection jumps |
+| **Tune Chladni flow snap with the real bowl** | `td/cbl.toe` (`flow.uChladni.x` gain expr; optional `lagCHOP` on `audio_out['energy']`) | Option B is gated by bowl energy; verify the snap-in/relax feels right with the live bowl and add a lagCHOP if it flickers. |
 
 ## Teammate Contributions (`EngineeringArt CBL/`)
 

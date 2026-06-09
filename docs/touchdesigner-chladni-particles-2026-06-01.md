@@ -318,6 +318,15 @@ A ~10-line shader edit, immediately better-looking, zero new operators.
 > markedly better than the current separable grid. Recommended first step.
 
 ### Option B — *Full effect:* particles collecting on the nodal lines
+
+> **✅ DONE 2026-06-09, but as a FLOW variant (not discrete particles).** Per the 2026-06-09
+> decision we kept the flowing-ink aesthetic: the normal-map velocity field now advects the
+> **flow feedback** onto the nodal lines (gated by the bowl ring), rather than reviving the
+> discrete `p_sim` particles. New ops `chladni_height → chladni_thr → chladni_nrm` feed the
+> `flow` shader. As-built details + tuning:
+> **`docs/touchdesigner-chladni-implementation-2026-06-09.md` §7.** The discrete-particle
+> recipe below is kept as the alternative (the `p_sim` render is currently dormant).
+
 Add the normal-map velocity force to the **existing** `p_sim` feedback shader.
 
 ```

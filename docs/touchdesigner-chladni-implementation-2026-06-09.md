@@ -9,8 +9,8 @@ Cleaned transcript verified against the 06-01 breakdown — no corrections neede
 > **STATUS: Option A DONE & saved in `cbl.toe` (2026-06-09).** The `cymatics` layer now
 > renders the **true square-plate Chladni figure** (Ritz 1909 superposition) instead of the
 > old separable `sin(kx)·sin(ky)` grid. The bowl pitch chooses the figure; the heartbeat
-> makes it breathe. **Option B (particles collecting on the nodal lines) is the next step —
-> plan is in the 06-01 doc §6 Option B; not built yet.**
+> makes it breathe. **Option B is now also DONE (2026-06-09):** the flowing ink settles onto
+> the nodal lines when the bowl rings — see §7 for the as-built details.
 
 ---
 
@@ -153,21 +153,50 @@ with a live `audiodeviceinCHOP` — it hangs TD on this machine). See `td/README
 
 ---
 
-## 7. What's next — Option B (particles on the nodal lines)
+## 7. Option B — flowing ink settles on the nodal lines (DONE 2026-06-09)
 
-The video's headline effect is **GPU particles migrating onto the nodal lines** (sand
-settling). We already have the particle feedback sim (`p_sim`) and the figure (this doc), so
-Option B is an **additive force**, not a new system. The concrete, verified plan is in
-`docs/touchdesigner-chladni-particles-2026-06-01.md` §6 Option B:
-1. `cymatics` → `Threshold TOP` → `Normal TOP` (square buffer) to make a **normal map**.
-2. In `p_sim`, sample the normal map at each particle's position and add
-   `vel += (normal.rg*2-1) * uChladniGain` (the **key trick**: R/G as a 2-D velocity pulls
-   particles in from all directions and stops them on the lines; grayscale only drifts sideways).
-3. Add `dFdx/dFdy` jitter so particles don't all stack on one point.
-4. Crossfade `uChladniGain` against the existing hand gather/scatter — **"the bowl arranges
-   the particles; your hands disturb them."** Strong narrative beat for 19 June.
+The video's headline effect is matter **migrating onto the nodal lines** (sand settling). The
+tutorial uses discrete GPU particles. **We chose to keep our flowing-ink aesthetic instead**
+(decision 2026-06-09): we bias the existing **flow feedback** toward the nodal lines, gated by
+the bowl. When the bowl rings, the flowing colour gathers into the Chladni figure; when it's
+quiet, the flow relaxes back to its ambient drift. (The old discrete 2048-particle system
+`p_sim`/`p_render` stays dormant — it's no longer composited into the output.)
 
-Estimated ~half a day; reuses `p_sim`. Ask and I'll build it.
+### How it works (the video's "normal-map velocity" trick, applied to the flow)
+1. **`chladni_height`** (glslTOP) — grayscale Chladni field, `abs(f)`: **dark valleys ON the
+   nodal lines**, bright between. Reuses the exact `chladni()` maths and the *same* `uMode`
+   uniform as `cymatics`, so it tracks the bowl pitch and lines up 1:1 with the visible figure.
+2. **`chladni_thr`** (Threshold TOP) → **`chladni_nrm`** (Normal TOP) — turns that height into
+   a **velocity field**: the normal's R/G point toward the nodal lines and go to zero *on* the
+   lines (so ink decelerates and pools there). This is the tutorial's key idea.
+3. **`flow`** shader (`flow_pixel`) gains a 3rd input (`chladni_nrm`) and a `uChladni.x` gain.
+   One added line advects the ink along that velocity field:
+   ```glsl
+   vec2 cv  = texture(sTD2DInputs[2], uv).rg*2.0 - 1.0;     // dir toward nodal lines
+   vec2 puv = uv - (fl*warp*(1.0 - min(0.85, g*4.0)) + cv*g*1.6);
+   ```
+   The ambient procedural warp (`fl`) **fades out as the gain `g` rises**, so the figure
+   becomes legible instead of being smeared by the ambient flow.
+4. **Trigger:** `uChladni.x` is bound to **smoothed bowl energy**
+   (`min(0.18, max(0.0, audio_out['energy'])*0.25)`). Quiet → 0 → the flow looks like before;
+   bowl ring → the ink snaps onto the figure. Since `cymatics` is also injected into the flow
+   and brightens with energy, the lines light up *and* the flow gathers onto them together.
+
+### Tuning (no rebuild needed)
+- **Strength of the snap:** the `*0.25` in the gain expression (bigger = snaps harder) and the
+  `cv*g*1.6` factor in `flow_pixel`.
+- **How much the ambient flow yields:** the `g*4.0` term (bigger = the figure dominates sooner).
+- **Cleaner vs. softer lines:** `chladni_thr` threshold/soften.
+- **If the snap flickers with the real bowl:** insert a `lagCHOP` on `audio_out['energy']`
+  before the gain expression for a smooth snap-in / relax-out (not added yet — needs a live
+  bowl to tune).
+- **Sign:** if a future change makes the ink flee the lines instead of gathering, flip the sign
+  of `cv` in `flow_pixel` (the normal-orientation / v-flip gotcha; verified correct as built).
+
+### Verified
+A/B with the bowl faked bright: gain 0 = smooth ambient ink; gain 0.16 = the flow visibly
+organises into the diamond-cell Chladni figure (rings inside each cell). Network error-free,
+quiet state unchanged (gated), saved mic-free.
 
 ---
 
