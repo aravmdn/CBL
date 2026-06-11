@@ -91,6 +91,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 - `docs/touchdesigner-chladni-particles-2026-06-01.md` — research paper (Rossing 1982 / Ritz 1909) + full breakdown of the Factory Settings Chladni video + graft plan.
 - `docs/touchdesigner-chladni-implementation-2026-06-09.md` — **as-built Chladni math** in `cymatics` (Option A done): plain-language maths, bowl/heartbeat→(n,m,L) mapping, tuning guide, Option B next step.
 - `docs/touchdesigner-heartbeat-serial-2026-06-09.md` — **live heartbeat serial diagnosis + migration plan**: the DTR+RTS gotcha (TD got 0 bytes until both enabled), COM7 (not COM5), board reset/re-enumeration, live BPM verified, sensor-flakiness-is-hardware, and the plan to move beat detection off the Arduino into TD.
+- `docs/touchdesigner-teammate-merge-2026-06-11.md` — **architect review of the EngineeringArt teammate's TouchDesigner file** (`td/incoming/EngineeringArt_TouchDesign_2026-06-11.toe`). A `.toe` is opaque binary and can't be merged off-tool (no TD on the build box); this doc holds the keep/adapt/drop framework against the one-surface architecture + the in-TD (or MCP-driven) merge procedure. `cbl.toe` is unchanged.
 - `docs/index.md` — doc index.
 - `docs/current-status.md` — current state and known risks.
 - `docs/ai-handoff.md` — concise takeover notes for Claude/Codex.
@@ -108,6 +109,7 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | `src/components/CameraStage.tsx` | Canvas rendering: camera, aura, cymatics, bloom particles, tracking nodes |
 | `src/App.tsx` | Main visual app shell, mic toggle, heartbeat state, signal readouts |
 | `td/cbl.toe` | **The installation.** TD network `/project1/cbl` (particles, aura, cymatics, aurora, composite → `master_out`) |
+| `td/incoming/EngineeringArt_TouchDesign_2026-06-11.toe` | Teammate-submitted TD file, preserved for selective merge. Opaque binary — merge it in TD per `docs/touchdesigner-teammate-merge-2026-06-11.md`, never overwrite `cbl.toe` with it |
 | `td/mp_engine.py` | **TD-native** MediaPipe PoseLandmarker (LIVE_STREAM async); makes TD self-sufficient (no browser) |
 | `td/pose_mp_callbacks.py` | `pose_mp` scriptCHOP — feeds TD's own camera to `mp_engine`, emits the same channels as the retired web bridge |
 | `td/models/*.task` | Bundled MediaPipe models (offline; committed) |
