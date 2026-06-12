@@ -240,11 +240,63 @@ so it's safe to just close TD **without saving**.
 
 ---
 
+## 10. 2026-06-12 — Alejandra port (glow + sand-grain + idle attract) — DONE
+
+Teammate **Alejandra** built a standalone square-plate Chladni visualizer
+(`td/experiments/alejandra-chladni/EngineeringArt_TouchDesign.10.toe`) — an independent
+re-implementation of the same Ritz math. We ported three of her techniques into our
+`cymatics`/flow layer (full analysis + extraction: `docs/touchdesigner-alejandra-chladni-port-2026-06-12.md`).
+Verified live via MCP, error-free, saved mic-free.
+
+1. **Soft Gaussian glow** (`cymatics_pixel`). The nodal-line term changed from a hard
+   `1.0 - smoothstep(0.0, 0.05, abs(f))` to Alejandra's luminous falloff
+   `exp(-f*f / 0.005)` (σ² tunable 0.004–0.006). Same peak-on-the-line, same range
+   `[0,1]` — just a soft glow instead of a hard stroke.
+
+2. **Idle ambient drift / attract state.** The `n`/`m` expressions on **both** `cymatics`
+   and `chladni_height` now fall back, when the bowl is quiet (`audio_out['energy'] ≤ 0.02`),
+   to a slow integer cycle `n = 3 + int(absTime.seconds/6)%5`, `m = n + 3` (steps every 6 s
+   through `n∈{3..7}, m=n+3`, always `n≠m`). The instant a bowl note pushes energy above
+   0.02, they snap back to the `peakHz → (n,m)` mapping. The figure is faintly visible when
+   idle because `uAudio.x` already carries a `0.45 + 0.35*sin` ambient term — so no extra
+   idle base-glow was needed (it would only have eaten the bowl's dynamic range).
+
+3. **Sand-grain accumulation layer** (the headline). New ops under `/project1/cbl`:
+   - `chladni_sand_pixel` (text DAT) — adapts Alejandra's `sand_pixel` to **our `−`
+     antisymmetric chladni** and the **shared `uMode`**. Per-frame hash speckle jitter near
+     the nodal lines, feedback accumulation `acc = min(prev*0.94 + grain*0.28, 1)` (raw `acc`
+     kept in **alpha** for clean readback; warm→chakra tint in rgb, scaled `*0.7` for a subtle
+     additive composite). Coordinate build (aspect, scale, warp) matches `cymatics` exactly so
+     grains land on the visible lines.
+   - `chladni_sand` (glslmultiTOP, 1280×720) — uniforms `uTime`/`uHue`/`uMode` copied from
+     `cymatics` + new `uGain` = `min(1.0, max(0.10, audio_out['energy']*5.0))` (bowl gate with
+     a small idle floor so the attract state still has faint texture). Input[0] = its feedback.
+   - `chladni_sand_fb` (feedbackTOP) → target `chladni_sand`.
+   - `comp_sand` (compositeTOP, `add`) = `chladni_sand` over `comp_flow`; `comp_bloom`'s first
+     input repointed `comp_flow → comp_sand`. Fully reversible (repoint back + delete 3 ops).
+   - **Flow-gather eased** so grain + flow don't double-emphasize: `flow.vec1valuex`
+     `min(0.18, energy*0.25)` → `min(0.13, energy*0.18)`.
+
+   Behaviour: bowl quiet → faint granular texture on the slowly-cycling idle figure; bowl
+   strike → `uGain→1`, grain piles up bright on the nodal lines and re-settles (×0.94/frame)
+   as the figure drifts or the pitch changes. Discrete "sand on the plate", on-concept.
+
+**Live-tuning knobs** (no rebuild): glow width `exp(-f*f/0.005)`; idle period `/6.0` & range
+`%5`; sand idle floor `0.10` / gate `*5.0`; grain build `*0.28` & relax `*0.94`; display gain
+`*0.7`; composite `comp_sand` operand (`add`↔`screen`); flow-gather `*0.18`. If the sand looks
+too busy live: set `flow` gain to 0 and let grain fully own the nodal lines (the "grain
+replaces Option B" fallback).
+
+---
+
 ## 9. Files
 
 | File | What |
 |---|---|
 | `td/cbl.toe` | `cymatics` now renders the Chladni superposition (this doc) |
-| `td/cbl.toe` → `cymatics_pixel` | the annotated GLSL shader |
+| `td/cbl.toe` → `cymatics_pixel` | the annotated GLSL shader (now with Gaussian glow, §10) |
+| `td/cbl.toe` → `chladni_sand`/`chladni_sand_pixel`/`chladni_sand_fb`/`comp_sand` | sand-grain layer (§10) |
+| `docs/touchdesigner-alejandra-chladni-port-2026-06-12.md` | Alejandra extraction + port plan (§10) |
+| `td/experiments/alejandra-chladni/EngineeringArt_TouchDesign.10.toe` | Alejandra's original standalone file |
 | `docs/touchdesigner-chladni-particles-2026-06-01.md` | research paper + full tutorial breakdown + Option B plan |
 | `EngineeringArt CBL/chladni_simulation.m` | the teammate's original MATLAB cymatics (the seed) |
