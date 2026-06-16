@@ -52,7 +52,21 @@ record of intent + how it was implemented._
 
 ## Open question to confirm at build time
 - Fingertips: start with the 2-point Pose proxy, or go straight to `hand_landmarker` for all
-  five fingers? (Affects orb count and tracking cost.)
+  five fingers? (Affects orb count and tracking cost.) — RESOLVED: `hand_landmarker`, all 10 tips.
+
+## As-built updates to the flow / finger interaction
+
+- **2026-06-13** — fingers push/stir/paint the flow directly (the orbs layer is dead/hidden; `flow`
+  is the visible aura). `hands_mp` (10 fingertips, `u=1-x`/`v=1-y` to match the `camera_flip` flipx
+  display) → `hands_lag` → `hands_vel` (slopeCHOP) feed `flow`'s `uFing0..9` uniforms; the shader
+  splats finger **velocity** into the back-advection (`exp(-d²/r²)·force`) and paints dye only while
+  moving. Config `uFingerCfg = vec4(radius, force, dye, hue)`.
+- **2026-06-16** — finger control retuned for less latency + more grip: `hands_lag` 0.06→0.04,
+  `uFingerCfg` radius 0.075→0.10 / force 0.05→0.09 / dye 0.06→0.08, `flow` fade 0.95→0.96. The
+  flow also now **reacts to bowl pitch** (`pitch_src`/`pitch_lag`→`uPitch`: higher note = finer/
+  faster swirls, energy-gated) and a time-phase **stutter** was fixed by driving flow time from an
+  integrated phase (`flow_rate`→`flow_phase` speedCHOP) instead of `absTime*rate`. Full detail:
+  `docs/touchdesigner-chladni-implementation-2026-06-09.md` §11.
 
 Related: see `docs/touchdesigner-onesurface-2026-05-27.md` for the standalone architecture and
 the separate background-segmentation upgrade (drop the room so the person floats on black).

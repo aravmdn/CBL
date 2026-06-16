@@ -81,6 +81,29 @@ firm, still fingertip and give it ~15–20 s to settle into the real resting rat
 The serial device stays **OFF in the committed `.toe`** for portability (a COM port bound
 to a machine that doesn't have it errors on open) — same convention as the bowl mic.
 
+## Pulse-amplitude fallback (updated 2026-06-16, committed `09ca746`)
+
+`heartbeat` is an lfoCHOP whose `beat` channel drives the visual pulse (cymatics/aurora/chladni
+breathing + `aura_warp`). Its **amplitude** is gated by an expression:
+
+```python
+heartbeat.par.amp = (1.0 if (op('pulse_serial') and op('pulse_serial').par.active.eval()
+    and op('bpm_raw') and (absTime.frame - float(op('bpm_raw').fetch('last_frame', -1e9)) < 300))
+    else 0.55)
+```
+
+- **Live sensor** (a BPM frame arrived within ~300 frames / ~5 s) → `amp = 1.0`: a full-strength
+  pulse at the real heart rate (`heartbeat.frequency = max(0.3, bpm_smooth['bpm']/60)`).
+- **No / dropped sensor** → `amp = 0.55`: the installation still **breathes gently** on the
+  resting-BPM sim (`bpm_raw` default 70 / last value), so it never looks dead during setup or if
+  the flaky sensor drops mid-demo. The `beat` consumers cube/scale `beat`, so 0.55 reads as a soft
+  breathe vs the strong amp-1.0 live pulse.
+
+This **reverses** the 2026-06-13 "gate pulse to real sensor only" (which set the else-branch to
+`0.0` → flat/dead with no sensor). Only the else-branch changed (`0.0 → 0.55`); the freshness gate
+and the whole `pulse_serial → pulse_callbacks → bpm_raw → bpm_smooth → heartbeat.frequency` chain
+are unchanged. Don't revert it to `0.0` without a reason.
+
 ## Sensor reliability (the new sensor + this one)
 
 - "Differing detections / sometimes just doesn't work" is **finger contact + board

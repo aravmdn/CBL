@@ -1,8 +1,24 @@
 # AI Handoff Notes
 
-Date: 2026-05-29
+Date: 2026-05-29 (original) · **current-state note added 2026-06-16**
 
 This file is for Claude, Codex, or another coding assistant picking up the CBL project.
+
+> **⚠️ 2026-06-16 — current state (read before the historical log below).** Most of this file
+> is a 2026-05-29 snapshot framed around the web app + the GPU particle system. Both are now
+> secondary/dormant. What's actually live in `td/cbl.toe`:
+> - **Visible:** live camera + finger-stirred **flowing-ink aura** (`flow`) + a **Chladni figure
+>   that morphs continuously with bowl pitch** + aurora + sand grain → `master_out`. The
+>   2048-particle system and wrist `aura_warp`/`orbs` are **dormant** (not composited).
+> - **Pose/hands:** TD-native MediaPipe (`pose_mp`/`hands_mp`), no browser. Track B is **done**.
+> - **Audio:** `audio_out` true-pitch detector (linear `spectrum` + harmonic-product-spectrum);
+>   `peakHz` drives figure + aura; chakra hue = colour. Mic added on demand by `enable_bowl_audio.py`.
+> - **Heartbeat:** live Arduino BPM on COM7 (`pulse_serial` chain); always breathes (amp 0.55 sim /
+>   1.0 live).
+> - **Latest work + how to continue:** `docs/touchdesigner-chladni-implementation-2026-06-09.md` §11,
+>   `docs/touchdesigner-heartbeat-serial-2026-06-09.md`, `td/README.md`. **Next = live aesthetic
+>   tuning with the real bowl in a quiet room.** Build/edit the network via the `claude-touchdesigner`
+>   MCP (port 44444); disable the bowl mic + serial before any `project.save`.
 
 ## Read These First
 
@@ -77,10 +93,11 @@ To use it in a session:
 
 As of 2026-05-29, **`td/cbl.toe` is the primary output path** — the full reactive build
 (hand-particle feature, aura warp, camera/cymatics/aurora composited to `master_out`). The
-previous simpler grid file is backed up locally as `td/cbl.toe.bak` (git-ignored) — do not
-delete until the live test passes. The TD-native pose engine (`td/mp_engine.py` +
-`td/pose_mp_callbacks.py`, recovered/committed 2026-05-29) makes it run with no browser; the
-open step is wiring `pose_mp` into the `.toe` (Track B — see the one-surface doc).
+previous simpler grid file is backed up locally as `td/cbl.toe.bak` (git-ignored). The
+TD-native pose engine (`td/mp_engine.py` + `td/pose_mp_callbacks.py`, recovered/committed
+2026-05-29) makes it run with no browser; **`pose_mp`/`hands_mp` are now wired into the `.toe`
+(Track B done 2026-05-29)** and the build has since moved to the flow/Chladni visuals — see the
+2026-06-16 current-state note at the top of this file.
 
 ## TouchDesigner Hand-Particle Feature (2026-05-26 → 2026-05-28)
 

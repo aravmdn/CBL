@@ -300,3 +300,37 @@ replaces Option B" fallback).
 | `td/experiments/alejandra-chladni/EngineeringArt_TouchDesign.10.toe` | Alejandra's original standalone file |
 | `docs/touchdesigner-chladni-particles-2026-06-01.md` | research paper + full tutorial breakdown + Option B plan |
 | `EngineeringArt CBL/chladni_simulation.m` | the teammate's original MATLAB cymatics (the seed) |
+
+---
+
+## 11. 2026-06-16 — real pitch detection + continuous morph + modes decoupled from loudness — DONE
+
+Three connected problems were fixed (committed `4897f88`, `09ca746`). All logic-verified; **live aesthetic tuning with the real bowl in a quiet room is still pending.**
+
+### 11a. The detector was frozen (the real root cause)
+The figure wasn't changing with pitch because `audio_out`'s `peakHz` was stuck at its silent default (~220 Hz). The actual cause was upstream: the `spectrum` (audiospectrumCHOP) was in **log/visual display mode** — `frequencylog=1` + `highfreqboost=0.75` — so the bin→Hz axis the detector assumed (`binHz=(rate/2)/numSamples`, linear) was wrong, and the HF boost amplified an ~11 kHz junk spike that broke the old confidence gate.
+
+- **Fix:** force `spectrum.frequencylog=0`, `highfreqboost=0` (linear). The mic + `spectrum` are **not saved** in `cbl.toe` (added on demand), so `td/enable_bowl_audio.py` now sets these **every session** — otherwise the detector breaks again on re-enable.
+- **Detector rewrite** (`audio_out_callbacks`): band-local noise floor (mean over 120–2000 Hz only, not the whole spectrum), a **harmonic-product-spectrum** fundamental finder (resolves octaves for harmonic bowls/kalimba) plus band-argmax for near-pure tones, parabolic interpolation, and a confidence test that **holds the last confident pitch** on silence/noise (never freezes mid-note). Outputs unchanged: `peakHz, hue, energy, chakra`. `hue`/`chakra` = nearest Solfeggio for **colour only**. Energy convention: ambient/quiet ≈ 0.02–0.06, a clear note ≈ 0.3–1.0 (cap ~1.5).
+- Synthetic tests through the live op: 220/440/528/880 Hz exact; 256/512/741 Hz (forks) exact; noise rejected.
+
+### 11b. The figure now MORPHS between patterns (no snapping)
+`(n,m)` used to be `round()`ed to integers → the figure popped between figures. Now:
+- `chladni_mode_src` (constantCHOP) emits **continuous float** `n,m` (the same log-frequency pitch map, un-rounded) → `chladni_mode_lag` (lagCHOP 0.35/0.70) smooths them. All three figure ops (`cymatics`, `chladni_height`, `chladni_sand`) read `op('chladni_mode_lag')['n'/'m']`.
+- `cymatics_pixel` (and the other two shaders) gained `chladniMorph(p,n,m)`: it evaluates the **four bracketing integer figures** `chladni(floor/ceil n, floor/ceil m)` and **bilinearly crossfades** by `fract(n)`/`fract(m)`. At integers the weights collapse to one corner → an identical clean figure; in transit a continuous blend. Degenerate corners (`ni==mi` → blank) are zero-weighted and renormalised → never collapses to blank.
+
+### 11c. Modes follow pitch at ANY loudness (decoupled from the energy gate)
+Previously `(n,m)` only followed `peakHz` when `chladni_energy_lag['energy'] > 0.10`; real playing sat ~0.06 → stuck in idle drift, so notes didn't change the figure. Now:
+- `chladni_mode_src` follows `peakHz` **always** (the detector holds its last confident pitch, so it's essentially always a valid musical pitch), and crossfades toward a slow idle drift only via `chladni_silence` (constantCHOP, `sil=1` when energy < 0.020) → `chladni_silence_lag` (lagCHOP, **6.0 s rise / 0.25 s fall** — idle only after ~6 s of true silence, snaps back to pitch in ~0.25 s).
+- **Brightness floor** raised in `cymatics_pixel` (`intensity = 0.55 + min(0.45, energy*0.9) + pulse*0.30`) + tighter nodal glow (`/0.0016`) + higher nodal mix (0.90) so the current figure is always legible and fine figures don't drown in fill. `chladni_sand` `uGain` idle floor 0.10→0.30 to match.
+
+### 11d. Aura reacts to pitch + a stutter was fixed (the `flow` layer)
+- **Pitch→motion:** `pitch_src` (constantCHOP: `pnorm` = log-map of `peakHz` 120–2000→0..1; `egate` = energy gate) → `pitch_lag` (lagCHOP) → `flow` uniform `uPitch`. Higher pitch → finer/faster swirls, gated by energy so silence stays calm.
+- **Stutter fix:** `flow_pixel` used to compute `tp = absTime.seconds*0.07*timeMul` — multiplying an ever-growing time by a pitch-varying rate makes the phase **jump every frame**. Flow time now comes from an **integrated phase** (`flow_rate` constantCHOP → `flow_phase` speedCHOP), which stays continuous when the rate changes; `kf` is constant. Result: smooth flow even while pitch changes.
+- **Finger control** made snappier/grippier: `hands_lag` 0.06→0.04, `uFingerCfg` radius 0.075→0.10 / force 0.05→0.09 / dye 0.06→0.08, `flow` fade 0.95→0.96. (Mirror was already correct: finger `u=1-x` matches the `camera_flip` flipx display.)
+
+### 11e. New ops (must persist in the save)
+`chladni_mode_src`, `chladni_mode_lag`, `chladni_silence`, `chladni_silence_lag` (figure); `pitch_src`, `pitch_lag`, `flow_rate`, `flow_phase` (aura). `chladni_energy_lag` (from the gate work) also persists.
+
+### 11f. Live-tuning knobs (no rebuild)
+Figure: silence floor `chladni_silence` (0.020) + dwell `chladni_silence_lag.lag1` (6 s); brightness floor (0.55) and glow width (`/0.0016`) in `cymatics_pixel`; mode smoothing `chladni_mode_lag` (0.35/0.70). Aura: pitch→speed gain in `flow_rate` (`*0.5`); finger feel `hands_lag` (0.04) + `flow.vec12` (radius/force/dye) + fade `flow.vec0valuex` (0.96).

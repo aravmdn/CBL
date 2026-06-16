@@ -1,6 +1,24 @@
 # Current Status
 
-Date: 2026-05-29
+Date: 2026-05-29 (original) · **last updated 2026-06-16**
+
+> **⚠️ 2026-06-16 — read this first.** Much of the detail below is a historical log from the
+> 2026-05-29 particle build and the web app. The installation has moved well past it. Current
+> reality:
+>
+> - **The visible installation** = the live camera + a **flowing-ink aura** (`flow`, which you
+>   stir with your fingers) + a **Chladni cymatics figure** that **morphs continuously between
+>   patterns with the bowl's pitch** + aurora ribbons, composited to `master_out`. The discrete
+>   2048-particle system and the wrist `aura_warp`/`orbs` layers are **dormant / not composited**.
+> - **Audio** = a true-pitch detector (`audio_out`, linear spectrum + harmonic-product-spectrum):
+>   `peakHz` drives the figure shape + aura motion; nearest Solfeggio → chakra hue for colour.
+> - **Heartbeat** = live Arduino BPM on COM7 drives the pulse; always breathes gently (amp 0.55)
+>   without a sensor, full pulse (amp 1.0) with one.
+> - **Standalone, no browser**, TD-native pose/hand tracking.
+> - Authoritative current docs: `docs/touchdesigner-onesurface-2026-05-27.md` (architecture),
+>   `docs/touchdesigner-chladni-implementation-2026-06-09.md` §11 (latest figure/aura/detector work),
+>   `docs/touchdesigner-heartbeat-serial-2026-06-09.md` (heartbeat). **Next = live aesthetic tuning
+>   with the real bowl in a quiet room** (the 2026-06-16 work is logic-verified, not bowl-tuned).
 
 ## Repository State
 
