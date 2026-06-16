@@ -39,6 +39,15 @@ def enable_bowl_audio(device=''):
     spec = op(CBL + '/spectrum')
     if spec is None:
         spec = op.TDAPI.CreateOp(cbl, audiospectrumCHOP, 'spectrum', x=-600, y=400)
+    # CRITICAL: the audio_out detector assumes a LINEAR bin->Hz axis
+    # (binHz = (rate/2)/numSamples). The audiospectrumCHOP defaults to a
+    # log/visual display (frequencylog=1) + highfreqboost=0.75, which warps the
+    # axis and amplifies an ~11 kHz junk spike -> peakHz freezes at its default
+    # and pitch detection dies. Force linear so the detector works. The mic +
+    # spectrum are NOT saved in cbl.toe (added on demand), so this MUST be set
+    # here every session. See docs/touchdesigner-chladni-implementation-*.md.
+    spec.par.frequencylog = 0
+    spec.par.highfreqboost = 0
     spec.inputConnectors[0].connect(mic)
 
     # feed the FFT magnitude spectrum into the chakra-detection scriptCHOP
