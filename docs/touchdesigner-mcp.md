@@ -153,4 +153,4 @@ file, so nothing built before the last good save is lost.
 
 ## Relation to the CBL Web App
 
-The web app (React/Vite) is the live demo product — it runs on a laptop at the installation. TouchDesigner is a separate creative tool for prototyping visuals, exploring GLSL effects, and testing ideas before translating them into canvas code. The TikTok visual reference (`docs/touchdesigner-reference.md`) was the original inspiration; this MCP plugin lets Arav prototype directly in TD and then port the results to the canvas.
+The web app (React/Vite) is the live demo product — it runs on a laptop at the installation. TouchDesigner is a separate creative tool for prototyping visuals, exploring GLSL effects, and testing ideas before translating them into canvas code. The TikTok visual reference (`docs/archive/touchdesigner-reference.md`) was the original inspiration; this MCP plugin lets Arav prototype directly in TD and then port the results to the canvas.

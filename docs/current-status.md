@@ -99,23 +99,24 @@ The visual direction has moved away from the older sample-audio/text prototype a
 
 ## Important Files
 
-- `src/App.tsx`: main UI state, mic toggle, heartbeat state, signal readouts.
-- `src/audio/useMicInput.ts`: browser microphone capture, frequency peaks, and chakra detection.
-- `src/audio/useHeartbeat.ts`: simulated heartbeat; later replace with Arduino/Web Serial input.
-- `src/audio/audioAnalysis.ts`: audio feature extraction and chakra frequency constants.
-- `src/camera/usePoseTracking.ts`: camera pose tracking, including wrist anchors.
-- `src/components/CameraStage.tsx`: canvas visuals: camera, aura, cymatics, bloom particles, tracking nodes.
-- `src/poetry/poemClient.ts`: dormant legacy poem request client.
-- `server/validation.ts`: dormant legacy poem request validation.
-- `server/openaiPoem.ts`: dormant legacy OpenRouter/OpenAI poem generation.
+- `legacy/web/src/App.tsx`: main UI state, mic toggle, heartbeat state, signal readouts.
+- `legacy/web/src/audio/useMicInput.ts`: browser microphone capture, frequency peaks, and chakra detection.
+- `legacy/web/src/audio/useHeartbeat.ts`: simulated heartbeat; later replace with Arduino/Web Serial input.
+- `legacy/web/src/audio/audioAnalysis.ts`: audio feature extraction and chakra frequency constants.
+- `legacy/web/src/camera/usePoseTracking.ts`: camera pose tracking, including wrist anchors.
+- `legacy/web/src/components/CameraStage.tsx`: canvas visuals: camera, aura, cymatics, bloom particles, tracking nodes.
+- `legacy/web/src/poetry/poemClient.ts`: dormant legacy poem request client.
+- `legacy/web/server/validation.ts`: dormant legacy poem request validation.
+- `legacy/web/server/openaiPoem.ts`: dormant legacy OpenRouter/OpenAI poem generation.
 - `CLAUDE.md`: architecture note for Claude/Codex handoff.
 - `README.md`: current setup, behavior, troubleshooting, and legacy code notes.
 
 ## Checks Run
 
-These checks were run on 2026-05-25 after the poetry-removal pivot:
+These checks were run on 2026-05-25 after the poetry-removal pivot (from `legacy/web/`):
 
 ```powershell
+cd legacy/web
 npm run lint
 ```
 
@@ -184,7 +185,7 @@ with no browser: head/torso tracked at 0.97/0.99 confidence, 0 network errors, s
 
 ### 1. Active Poetry Was Removed From The UI
 
-`src/App.tsx` no longer imports or calls `requestPoem`.
+`legacy/web/src/App.tsx` no longer imports or calls `requestPoem`.
 
 Removed from the active screen:
 
@@ -244,7 +245,7 @@ Implemented:
 - wrist/shoulder/head tracking rings and lines
 - chakra/frequency status text
 
-Full details: `docs/touchdesigner-reference.md`.
+Full details: `docs/archive/touchdesigner-reference.md`.
 
 ### 5. Remaining Practical Risk
 
@@ -255,5 +256,5 @@ The integration is covered by automated tests, but the frequency thresholds and 
 1. **Track B — wire TD standalone:** place the `pose_mp` scriptCHOP in `cbl.toe`, repoint the public `pose` read point from the `pose_ws` bridge to `pose_mp`, confirm `camera_in` is a live `videodeviceinTOP`. (Needs TD open on MCP :44444.)
 2. **Live test with a person, browser closed:** confirm the camera is live (not frozen) and particles/aura react to real hands; then tune gather speed, scatter threshold, and glow.
 3. Enable + tune the live bowl mic on the demo laptop (`td/enable_bowl_audio.py`); test chakra stability with the real bowl.
-4. (Web fallback only, if needed) tune `MIN_PEAK_FREQUENCY` / `MAX_PEAK_FREQUENCY` / `PEAK_SPACING_HZ` / `MIN_DOMINANT_MAGNITUDE` in `src/audio/useMicInput.ts` and visual intensity in `src/components/CameraStage.tsx`.
+4. (Web fallback only, if needed) tune `MIN_PEAK_FREQUENCY` / `MAX_PEAK_FREQUENCY` / `PEAK_SPACING_HZ` / `MIN_DOMINANT_MAGNITUDE` in `legacy/web/src/audio/useMicInput.ts` and visual intensity in `legacy/web/src/components/CameraStage.tsx`.
 5. Keep `README.md` and `docs/` updated after demo-room testing.

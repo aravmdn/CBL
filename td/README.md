@@ -60,7 +60,7 @@ Two ways to drive the `pose` channels that the particles + aura read:
 
 2. **Browser bridge (retired fallback).** Open `td/cbl.toe`, then:
    ```powershell
-   $env:VITE_TD_BRIDGE = '1'; npm run dev
+   cd legacy/web; $env:VITE_TD_BRIDGE = '1'; npm run dev
    ```
    (or in devtools: `localStorage['td-bridge']='1'`, reload). Open http://localhost:5173,
    allow camera; `pose_ws` shows 1 client and the `pose` channels track your hands. **This

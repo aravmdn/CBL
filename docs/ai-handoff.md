@@ -122,7 +122,7 @@ pulled to the person's wrists by the live web-app pose stream.
 proven correct end-to-end via synthetic data; the unverified piece is aesthetic feel
 (gather speed, scatter threshold, glow intensity).
 
-See `docs/touchdesigner-resume-2026-05-27.md` for the operator-level log and `docs/touchdesigner-handoff-2026-05-26.md` for the original build journal.
+See `docs/touchdesigner-resume-2026-05-27.md` for the operator-level log and `docs/archive/touchdesigner-handoff-2026-05-26.md` for the original build journal.
 
 ## Visual Changes Since Midterm (2026-05-19 → 2026-05-25)
 
@@ -186,7 +186,7 @@ The TikTok is a TouchDesigner learning path, not a direct React tutorial. The pr
 - audio-reactive bloom particles
 - hand/body tracking nodes
 
-See `docs/touchdesigner-reference.md` for the full handoff.
+See `docs/archive/touchdesigner-reference.md` for the full handoff.
 
 ## Do Not Accidentally Remove These
 
@@ -283,6 +283,7 @@ Check this with the real setup:
 Run after implementation:
 
 ```powershell
+cd legacy/web
 npm run lint
 npm run test
 npm run build
@@ -292,6 +293,7 @@ npm run test:e2e
 Manual check:
 
 ```powershell
+cd legacy/web
 npm run dev
 ```
 

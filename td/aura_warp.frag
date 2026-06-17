@@ -5,7 +5,7 @@
 //
 // A soft radial glow centred on the torso, domain-warped toward each hand,
 // tinted by chakra hue and brightened on each heartbeat. This is the
-// "hand-warped body aura" from docs/touchdesigner-handoff-2026-05-26.md §5 Step 2.
+// "hand-warped body aura" from docs/archive/touchdesigner-handoff-2026-05-26.md §5 Step 2.
 //
 // COORDINATES (do NOT re-derive — baked to match the particle sim):
 //   All pose UVs arrive 0..1 with v already y-up (pose_ws_cb flips v = 1 - y).

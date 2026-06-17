@@ -50,4 +50,4 @@ in step 1 instead of the pose mask. Higher quality, slightly more cost.
   the matte is verified, same discipline as the retired pose bridge.
 
 Related: `docs/touchdesigner-onesurface-2026-05-27.md` (architecture),
-`docs/touchdesigner-visual-redesign-2026-05-29.md` (the flow + orbs already built).
+`docs/archive/touchdesigner-visual-redesign-2026-05-29.md` (the flow + orbs already built).

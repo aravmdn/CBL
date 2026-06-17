@@ -38,16 +38,17 @@ camera. See the one-surface doc.)
 
 Full runbook + boot-hang reboot rule: `docs/touchdesigner-onesurface-2026-05-27.md` and `memory/touchdesigner_setup.md`.
 
-**The web app (secondary dev tool / fallback):**
+**The web app (secondary dev tool / fallback — now lives in `legacy/web/`):**
 
 ```powershell
+cd legacy/web
 npm install
 npm run dev        # Vite app on :5173, legacy Express API on :8787
 npm test           # Vitest tests
 npm run build      # TypeScript check + Vite production build
 ```
 
-No API key is required. No browser is needed for the demo.
+No API key is required. No browser is needed for the demo. See `RUN.md` (repo root) for the full run guide.
 
 ## Architecture
 
@@ -59,7 +60,12 @@ pose_mp (scriptCHOP)          - MediaPipe PoseLandmarker (LIVE_STREAM) in TD's o
                                 (td/mp_engine.py + td/pose_mp_callbacks.py, models in td/models/);
                                 emits lWrist/rWrist/head/torso _u/_v/_c (+ wrists _spd) into `pose`
 p_sim / p_geo / p_render      - 2048-particle GPU feedback sim; gather to still hands, scatter from fast
-aura_warp (glslTOP)           - body aura domain-warped toward the hands, BPM/chakra tinted
+seg_mask (scriptTOP)          - MediaPipe person segmentation matte (mp_engine already computes it),
+                                flip-aligned (flipud+fliplr) to the display (td/seg_mask_callbacks.py);
+                                mask_blur (blurTOP) softens it
+aura_warp (glslTOP)           - body aura domain-warped toward the hands, BPM/chakra tinted; now samples
+                                the seg matte on input 0 and dims the radial aura over the body
+                                (uControl: x=personFade=0.7, y=keepFloor=0.15) so the person shows through
 cymatics (glslTOP)            - Chladni square-plate figure (Ritz superposition); CONTINUOUS morph
                                 between (n,m) modes driven by bowl pitch (no snapping); chakra-tinted
 aurora (glslTOP)              - 4 BPM-tinted light ribbons
@@ -69,7 +75,12 @@ audio_out (scriptCHOP)        - bowl spectrum -> TRUE dominant pitch (peakHz, ha
                                 `spectrum` are added on demand by enable_bowl_audio.py (forces linear mode)
 heartbeat (lfoCHOP)           - pulse rate from live Arduino BPM (COM7) via pulse_serial→...→bpm_smooth;
                                 ALWAYS breathes (amp 0.55 resting-sim / 1.0 full pulse on a live sensor)
-composite -> master_out       - void -> camera -> +flow(cymatics+aurora+orbs feedback) -> +aura -> +fingertip orbs -> screen
+reveal (glslTOP)              - composite-tail "see yourself through the aura" stage (td/reveal.frag): blends the
+                                sharp camera (comp_cam) back in over the body via the seg matte —
+                                final = mix(effects, comp_cam, person * uReveal); uReveal default 0.6 (0 = original
+                                fully-covered look). Glow stays full-strength in the surrounding space.
+composite -> master_out       - void -> camera -> +flow(cymatics+aurora+orbs feedback) -> +aura -> +fingertip orbs
+                                -> reveal (camera back over the body) -> master_level -> screen
                                 (NOTE: the discrete p_sim/p_render particles are DORMANT — not composited; the
                                  flowing-ink layer now carries the Chladni effect. See chladni-implementation doc.)
 ```
@@ -82,45 +93,47 @@ no browser: head/torso tracked at 0.97/0.99 confidence straight from `camera_in`
 language on a 2D canvas). `useMicInput` (FFT peaks + chakra), `useHeartbeat` (simulated
 70→62 BPM), `useCamera` + `usePoseTracking` (MediaPipe), `CameraStage` (canvas pipeline:
 void → camera → white field → cymatics → aurora → aura → bloom particles → tracking nodes →
-frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gated OFF unless
-`VITE_TD_BRIDGE=1`. Legacy poem server/client is dormant.
+frequency bars). The whole web app now lives in `legacy/web/`. `legacy/web/src/net/usePoseStream.ts`
+is the retired pose→TD bridge, gated OFF unless `VITE_TD_BRIDGE=1`. Legacy poem server/client is dormant.
 
 ## Reference Docs
 
 - **`docs/touchdesigner-onesurface-2026-05-27.md` — START HERE. The authoritative standalone (TD-primary) architecture.**
 - `docs/touchdesigner-resume-2026-05-27.md` — running log of TD work; the single entry point to continue building.
 - `td/README.md` — TouchDesigner operator map for `/project1/cbl`.
-- `docs/touchdesigner-handoff-2026-05-26.md` — operator-level handoff for the hand-particle feature.
+- `docs/archive/touchdesigner-handoff-2026-05-26.md` — operator-level handoff for the hand-particle feature.
 - `docs/touchdesigner-for-teammates.md` — plain-language TD explainer for Group 5.
 - `docs/touchdesigner-mcp.md` — how to use the claude-touchdesigner MCP plugin to build TD networks from Claude Code.
-- `docs/touchdesigner-chladni-particles-2026-06-01.md` — research paper (Rossing 1982 / Ritz 1909) + full breakdown of the Factory Settings Chladni video + graft plan.
+- `docs/archive/touchdesigner-chladni-particles-2026-06-01.md` — research paper (Rossing 1982 / Ritz 1909) + full breakdown of the Factory Settings Chladni video + graft plan.
 - `docs/touchdesigner-chladni-implementation-2026-06-09.md` — **as-built Chladni math** in `cymatics`: plain-language maths, bowl/heartbeat→(n,m,L) mapping, tuning guide. §11 covers the 2026-06-16 pitch-detector fix + continuous morph + modes-decoupled-from-loudness.
 - `docs/touchdesigner-heartbeat-serial-2026-06-09.md` — **live heartbeat serial diagnosis + migration plan**: the DTR+RTS gotcha (TD got 0 bytes until both enabled), COM7 (not COM5), board reset/re-enumeration, live BPM verified, sensor-flakiness-is-hardware, and the plan to move beat detection off the Arduino into TD.
 - `docs/index.md` — doc index.
 - `docs/current-status.md` — current state and known risks.
 - `docs/ai-handoff.md` — concise takeover notes for Claude/Codex.
-- `docs/matlab-integration-ideation.md` — teammate MATLAB integration rationale.
-- `docs/touchdesigner-reference.md` — original TikTok reference (the canvas-translation pass; now superseded by the TD-primary direction).
+- `docs/archive/matlab-integration-ideation.md` — teammate MATLAB integration rationale.
+- `docs/archive/touchdesigner-reference.md` — original TikTok reference (the canvas-translation pass; now superseded by the TD-primary direction).
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `src/audio/useHeartbeat.ts` | Simulated heartbeat; swap body for Web Serial API reads when Arduino arrives |
-| `src/audio/useMicInput.ts` | Live mic capture for bowl audio, FFT peaks, nearest chakra |
-| `src/audio/audioAnalysis.ts` | Goertzel chakra detection (396-963 Hz), band energy, BPM estimation |
-| `src/camera/usePoseTracking.ts` | MediaPipe pose tracking, including wrist anchors for hand-tracking visuals |
-| `src/components/CameraStage.tsx` | Canvas rendering: camera, aura, cymatics, bloom particles, tracking nodes |
-| `src/App.tsx` | Main visual app shell, mic toggle, heartbeat state, signal readouts |
+| `legacy/web/src/audio/useHeartbeat.ts` | Simulated heartbeat; swap body for Web Serial API reads when Arduino arrives |
+| `legacy/web/src/audio/useMicInput.ts` | Live mic capture for bowl audio, FFT peaks, nearest chakra |
+| `legacy/web/src/audio/audioAnalysis.ts` | Goertzel chakra detection (396-963 Hz), band energy, BPM estimation |
+| `legacy/web/src/camera/usePoseTracking.ts` | MediaPipe pose tracking, including wrist anchors for hand-tracking visuals |
+| `legacy/web/src/components/CameraStage.tsx` | Canvas rendering: camera, aura, cymatics, bloom particles, tracking nodes |
+| `legacy/web/src/App.tsx` | Main visual app shell, mic toggle, heartbeat state, signal readouts |
 | `td/cbl.toe` | **The installation.** TD network `/project1/cbl` (particles, aura, cymatics, aurora, composite → `master_out`) |
 | `td/mp_engine.py` | **TD-native** MediaPipe PoseLandmarker (LIVE_STREAM async); makes TD self-sufficient (no browser) |
 | `td/pose_mp_callbacks.py` | `pose_mp` scriptCHOP — feeds TD's own camera to `mp_engine`, emits the same channels as the retired web bridge |
 | `td/models/*.task` | Bundled MediaPipe models (offline; committed) |
 | `td/pylibs/` | Vendored Python runtime (git-ignored; recreate via `pip install -r td/requirements.txt --target td/pylibs`) |
-| `td/aura_warp.frag` | Hand-warped body-aura GLSL shader |
+| `td/aura_warp.frag` | Hand-warped body-aura GLSL shader; samples the seg matte (input 0) and dims the aura over the body |
+| `td/seg_mask_callbacks.py` | `seg_mask` scriptTOP — exposes MediaPipe's person segmentation matte as a TOP, flip-aligned (flipud+fliplr) to the display |
+| `td/reveal.frag` | Tail composite shader — blends the sharp camera back in over the body via the seg matte so the person shows through (`uReveal`) |
 | `td/enable_bowl_audio.py` | Adds the live bowl mic on the demo laptop (kept out of the saved `.toe` — it hangs TD) |
-| `src/net/usePoseStream.ts` | Retired web→TD pose bridge (gated OFF unless `VITE_TD_BRIDGE=1`) |
-| `src/poetry/poemClient.ts` / `server/openaiPoem.ts` / `server/validation.ts` | Dormant legacy poem code; not imported by the app |
+| `legacy/web/src/net/usePoseStream.ts` | Retired web→TD pose bridge (gated OFF unless `VITE_TD_BRIDGE=1`) |
+| `legacy/web/src/poetry/poemClient.ts` / `legacy/web/server/openaiPoem.ts` / `legacy/web/server/validation.ts` | Dormant legacy poem code; not imported by the app |
 
 ## What Is Done
 
@@ -143,12 +156,13 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 - [x] claude-touchdesigner MCP plugin installed (v0.1.6) — see `docs/touchdesigner-mcp.md`
 - [x] TouchDesigner reactive build (`td/cbl.toe`) — 2048-particle GPU sim that gathers/scatters from wrists, hand-warped aura, composited with camera/cymatics/aurora to `master_out`. Smoke-tested 2026-05-28 with synthetic pose: 1031/2048 to L hand, 1006/2048 to R hand, 0 at center. See `docs/touchdesigner-resume-2026-05-27.md`.
 - [x] **TD-native pose engine recovered + committed (2026-05-29)** — `td/mp_engine.py` + `td/pose_mp_callbacks.py` run MediaPipe inside TD's Python with bundled offline models; this is what makes TD self-sufficient (no browser). Built in a prior session, never committed; now in git. See `docs/touchdesigner-onesurface-2026-05-27.md`.
-- [x] **Seamless flowing-colour redesign (2026-05-29)** — smooth cymatics (no dot-grid), liquid/ink feedback flow (`flow`/`flow_fb`, advect+inject, composited over the camera so the person stays sharp), and 10-fingertip glowing orbs (`orbs` + `hands_mp` via `td/hand_mp_callbacks.py` + hand_landmarker) that trail/dissolve into the flow. Colour driven by bowl hue + heartbeat + ambient drift. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`.
+- [x] **Seamless flowing-colour redesign (2026-05-29)** — smooth cymatics (no dot-grid), liquid/ink feedback flow (`flow`/`flow_fb`, advect+inject, composited over the camera so the person stays sharp), and 10-fingertip glowing orbs (`orbs` + `hands_mp` via `td/hand_mp_callbacks.py` + hand_landmarker) that trail/dissolve into the flow. Colour driven by bowl hue + heartbeat + ambient drift. Verified live. Spec: `docs/archive/touchdesigner-visual-redesign-2026-05-29.md`.
 - [x] **Chladni square-plate math implemented in `cymatics` (2026-06-09)** — replaced the old separable `sin(kx)·sin(ky)` grid with the true two-mode superposition `cos(nπx/L)cos(mπy/L) − cos(mπx/L)cos(nπy/L)` (Ritz 1909), rendering glowing nodal lines ("sand on the plate"). `uMode=(n,m,breathScale,phase)` on vec3: bowl `peakHz → (n,m)`, `heartbeat → breathing`, chakra hue unchanged. Verified live (figures at (3,5)/(5,8) correct), network error-free, saved mic-free. This is Option A of the Chladni graft plan. Spec: `docs/touchdesigner-chladni-implementation-2026-06-09.md`.
 - [x] **Chladni Option B — flowing ink settles on the nodal lines (2026-06-09)** — the video's headline effect, done as a flow variant (not discrete particles, per choice). New `chladni_height → chladni_thr → chladni_nrm` (Normal TOP velocity field) feeds the `flow` shader; `uChladni.x` gain (gated by bowl `energy`) advects the flowing ink onto the nodal lines and suppresses the ambient warp so the figure reads. Bowl ring → ink snaps into the Chladni figure; quiet → ambient flow (fully gated/reversible). A/B-verified live, error-free, saved mic-free. Spec: chladni-implementation doc §7.
 - [x] **Alejandra's Chladni techniques ported into `cymatics` (2026-06-12)** — teammate Alejandra's standalone Chladni `.toe` (now at `td/experiments/alejandra-chladni/`) analyzed and three techniques grafted onto our layer: (1) **soft Gaussian glow** — `cymatics_pixel` nodal term `1.0-smoothstep(0,0.05,|f|)` → `exp(-f*f/0.005)`; (2) **idle attract** — when the bowl is quiet (`energy≤0.02`), `n`/`m` on `cymatics` + `chladni_height` slow-cycle integer figures (`n=3+int(t/6)%5, m=n+3`), snapping to `peakHz` on a strike; (3) **sand-grain layer** — new `chladni_sand` (glslmulti, our `−` chladni + shared `uMode`) + `chladni_sand_fb` (feedback) + `comp_sand` (add into `comp_bloom`), bowl-gated `uGain` with a small idle floor; flow-gather eased so grain+flow don't double up. MCP-built, error-free recursively, saved mic-free (29610→31074 B). Spec: `docs/touchdesigner-chladni-implementation-2026-06-09.md` §10 + `docs/touchdesigner-alejandra-chladni-port-2026-06-12.md`. **Pending: live aesthetic tuning with the real bowl.**
 - [x] **Live heartbeat → TD wired in software (2026-05-29)** — teammate Arduino pulse-sensor work integrated. New chain in `cbl.toe`: `pulse_serial` (serialDAT, **OFF** in the saved file) → `pulse_callbacks` (tolerant parser, accepts both teammate sketches' formats) → `bpm_raw` (constantCHOP, holds last good BPM, resting default 70) → `bpm_smooth` (lagCHOP) → `heartbeat.frequency = max(0.3, bpm_smooth['bpm']/60)`. All 5 existing `beat` consumers untouched. Verified by injecting fake serial lines (parse + junk-rejection confirmed). Demo-laptop enable: `td/enable_pulse_serial.py`. Recommended firmware (merge of both sketches, clean continuous output): `td/arduino/heartbeat_stream/heartbeat_stream.ino`. **LIVE-VERIFIED 2026-06-09** (board streams 62.6 BPM on COM7; serialDAT needs both `dtr`+`rts`). **Amp fallback updated 2026-06-16:** `heartbeat.amp = 1.0 if a BPM frame arrived within ~5s else 0.55`, so a live sensor gives a full-strength pulse at the real rate and no/dropped sensor still breathes gently on the resting sim (was gated to 0 = dead). See `docs/touchdesigner-heartbeat-serial-2026-06-09.md`.
 - [x] **Real pitch detection + frequency-driven morphing figure & aura (2026-06-16)** — `audio_out` was frozen at `peakHz≈220` because `spectrum` was in log/visual mode (`frequencylog=1`+`highfreqboost=0.75`) → wrong bin→Hz axis. Forced **linear** spectrum + rewrote the detector (band-local noise floor + harmonic-product-spectrum + parabolic interp); `peakHz` now tracks true pitch ~120–2000 Hz and rejects silence/noise. `enable_bowl_audio.py` now sets the linear mode every session (mic/spectrum aren't saved). **Chladni figure now MORPHS** continuously between bracketing integer figures (`chladniMorph` bilinear crossfade; `chladni_mode_src`→`chladni_mode_lag` feed float n,m) instead of snapping; modes follow `peakHz` at **any loudness** (decoupled from the old `energy>0.10` gate; idle drift only after ~6s of true silence via `chladni_silence`/`_lag`); brightness floor raised so the figure is always legible. **Aura now reacts to pitch** (`flow`: finer/faster swirls on higher notes via `pitch_src`/`pitch_lag`→`uPitch`); fixed a **stutter** where the shader multiplied ever-growing `absTime` by a changing rate (phase jumped) — flow time now comes from an integrated phase (`flow_phase` speedCHOP). **Finger→aura control** made snappier/grippier (`hands_lag` 0.06→0.04; `uFingerCfg` radius/force/dye up; fade 0.96). MCP-built, 0 errors, saved + committed (`4897f88`,`09ca746`). Spec: `docs/touchdesigner-chladni-implementation-2026-06-09.md` §11. **Pending: live aesthetic tuning with the real bowl in a quiet room.**
+- [x] **"See yourself through the aura" (2026-06-17)** — the aura + flowing-colour effects used to fully cover the person; now the real camera-person shows through wherever effects cover their **body**, while the glow stays full-strength in the surrounding space. Three pieces in `cbl.toe`: (1) `seg_mask` scriptTOP (`td/seg_mask_callbacks.py`) exposes MediaPipe's person segmentation matte (`mp_engine` already computes it), flip-aligned (flipud+fliplr) to the display → `mask_blur` (blurTOP) softens it; (2) `aura_warp.frag` samples that matte on input 0 and dims the radial aura over the body (new `uControl`: x=personFade=0.7, y=keepFloor=0.15); (3) NEW `reveal` glslTOP (`td/reveal.frag`) at the composite tail (just before `master_level`) blends the sharp camera back in over the body: `final = mix(effects, comp_cam, person * uReveal)`, `uReveal` default 0.6 (0 = original fully-covered look). Verified live: over the body the final image correlates 0.95 with the camera; background unchanged; 0 recursive errors; 60fps. Committed `7ee889b` + `62e9b14`.
 
 ## Pending
 
@@ -157,11 +171,11 @@ frequency bars). `src/net/usePoseStream.ts` is the retired pose→TD bridge, gat
 | ~~Wire TD standalone (Track B)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pose_mp` placed + wired (loads `td/pose_mp_callbacks.py`), `pose` repointed to it, `camera_in` confirmed live. Verified: head/torso 0.97/0.99, no browser. |
 | ~~Live aesthetic check~~ — **DONE 2026-05-29** | `td/cbl.toe` | Particles track both hands (gather/scatter); tuned `comp_bloom` add→screen (violet, not white-out) + `camera_level` brighter. |
 | **Background segmentation (next visual upgrade)** | new scriptTOP in `td/cbl.toe` | Drop the room so the person floats on black (removes the ceiling "wedge", makes the person pop). `mp_engine` already computes the body mask. Full build steps + the flip-alignment gotcha: `docs/touchdesigner-segmentation-2026-05-29.md`. **Needs TD open + a person.** |
-| ~~Visual redesign: dot-grid → seamless flowing colour~~ — **DONE 2026-05-29** | `td/cbl.toe` | Smooth cymatics + liquid/ink feedback flow + 10-fingertip glowing orbs (hand_landmarker) blended into the flow. Verified live. Spec: `docs/touchdesigner-visual-redesign-2026-05-29.md`. |
+| ~~Visual redesign: dot-grid → seamless flowing colour~~ — **DONE 2026-05-29** | `td/cbl.toe` | Smooth cymatics + liquid/ink feedback flow + 10-fingertip glowing orbs (hand_landmarker) blended into the flow. Verified live. Spec: `docs/archive/touchdesigner-visual-redesign-2026-05-29.md`. |
 | ~~Arduino pulse sensor → real BPM (TD software)~~ — **DONE 2026-05-29** | `td/cbl.toe` | `pulse_serial`→`pulse_callbacks`→`bpm_raw`→`bpm_smooth`→`heartbeat.frequency`. `beat` channel unchanged. Serial OFF in saved file; enable via `td/enable_pulse_serial.py`. |
 | ~~Arduino: flash firmware + verify live BPM~~ — **LIVE-VERIFIED 2026-06-09** | `td/enable_pulse_serial.py` (committed `6364ddf`) | Board streams clean BPM (62.63 resting) at 115200 on **COM7**; `heartbeat` LFO tracked it live. **Root fix: TD `serialDAT` needs BOTH `dtr` AND `rts` enabled** — native-USB board discards TX otherwise (got 0 bytes). Default port COM7 (COM3-6 are Bluetooth). Enable once + leave open (open/close resets the board). Full writeup: `docs/touchdesigner-heartbeat-serial-2026-06-09.md`. |
 | **Move beat detection Arduino → TD (kill the compile loop)** — *proposed, awaiting go-ahead* | new `td/arduino/heartbeat_raw/heartbeat_raw.ino` + rewritten `pulse_callbacks` | Arduino becomes a dumb firehose (`Serial.println(sensor.getIR())` ~100/s, never recompiled); TD does finger-detect + beat-detect + BPM + smoothing in Python (live-tunable, diagnosable). Same `bpm_raw→bpm_smooth→heartbeat` chain. New MAX30102 (TinyTronics, same chip) drops in. No `pyserial` in TD → detect in the `onReceive` callback. Plan in the heartbeat-serial doc. |
-| Tune bowl chakra detection | `td/audio_out_callbacks` (and `src/audio/useMicInput.ts` for the web fallback) | Detector rewritten 2026-06-16 (true pitch, linear spectrum) — `peakHz`/`chakra` now track real pitch. Remaining: confirm chakra hues feel right with the real bowl. |
+| Tune bowl chakra detection | `td/audio_out_callbacks` (and `legacy/web/src/audio/useMicInput.ts` for the web fallback) | Detector rewritten 2026-06-16 (true pitch, linear spectrum) — `peakHz`/`chakra` now track real pitch. Remaining: confirm chakra hues feel right with the real bowl. |
 | **Live aesthetic tuning with the real bowl (quiet room)** — *all the 2026-06-16 work is logic-verified but not aesthetically tuned in front of the real bowl* | `td/cbl.toe` | Knobs: figure silence-floor `chladni_silence` (0.020) + dwell `chladni_silence_lag.lag1` (6s); figure brightness floor (0.55) in `cymatics_pixel`; pitch→aura-speed gain in `flow_rate` (`*0.5`); finger `hands_lag`/`uFingerCfg`. Room was noisy during the build (ambient energy ≈0.04–0.06); reads cleaner with a sustained bowl tone in a quiet space. Steps in chladni-implementation doc §11. |
 
 ## Teammate Contributions (`EngineeringArt CBL/`)

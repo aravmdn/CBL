@@ -35,6 +35,7 @@ usePoseStream   ─┘     (usePoseStream also sends body/hand positions to Touc
 ## Running it (in the real repo, not this snapshot)
 
 ```text
+cd legacy/web
 npm install
 npm run dev        # starts the app at http://127.0.0.1:5173/
 npm test           # runs the tests

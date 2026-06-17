@@ -64,6 +64,7 @@ in the actual room:
 The web app has automated tests that run with these commands, and all currently pass:
 
 ```text
+cd legacy/web
 npm run lint      (style/quality check)
 npm run test      (unit + component tests)
 npm run build     (full build / type check)

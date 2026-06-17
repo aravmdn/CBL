@@ -1,7 +1,7 @@
 # Chladni math — IMPLEMENTED in `cbl.toe` (2026-06-09)
 
 _What was actually built, the math behind it in plain language, and how to tune it.
-Companion to the research/plan doc `docs/touchdesigner-chladni-particles-2026-06-01.md`
+Companion to the research/plan doc `docs/archive/touchdesigner-chladni-particles-2026-06-01.md`
 (paper citations + the full tutorial breakdown). Source video: Factory Settings,
 "Audioreactive particles with Chladni Cymatics in TouchDesigner" (`youtu.be/MpnKDIBTk7c`).
 Cleaned transcript verified against the 06-01 breakdown — no corrections needed._
@@ -298,7 +298,7 @@ replaces Option B" fallback).
 | `td/cbl.toe` → `chladni_sand`/`chladni_sand_pixel`/`chladni_sand_fb`/`comp_sand` | sand-grain layer (§10) |
 | `docs/touchdesigner-alejandra-chladni-port-2026-06-12.md` | Alejandra extraction + port plan (§10) |
 | `td/experiments/alejandra-chladni/EngineeringArt_TouchDesign.10.toe` | Alejandra's original standalone file |
-| `docs/touchdesigner-chladni-particles-2026-06-01.md` | research paper + full tutorial breakdown + Option B plan |
+| `docs/archive/touchdesigner-chladni-particles-2026-06-01.md` | research paper + full tutorial breakdown + Option B plan |
 | `EngineeringArt CBL/chladni_simulation.m` | the teammate's original MATLAB cymatics (the seed) |
 
 ---

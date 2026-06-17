@@ -24,7 +24,7 @@
 #
 #   Resume target file: td/cbl_hands_wip.toe   (NOT cbl.toe — that lacks particles)
 #   Full context:       docs/touchdesigner-resume-2026-05-27.md
-#                       docs/touchdesigner-handoff-2026-05-26.md
+#                       docs/archive/touchdesigner-handoff-2026-05-26.md
 #
 # HOW TO USE (post-reboot, TD healthy + MCP responding)
 #   Run ONE function per td_execute call, and CHECK ERRORS IN A SEPARATE CALL

@@ -72,4 +72,4 @@ render fix). The live project on the dev laptop is the most accurate reference â
 This is the installation we present on 19 June â€” TouchDesigner driving the projector
 from one laptop, no browser. (The web app is kept only as a simpler fallback.) Full
 technical handoff: `docs/touchdesigner-onesurface-2026-05-27.md` (architecture) and
-`docs/touchdesigner-handoff-2026-05-26.md` (build journal).
+`docs/archive/touchdesigner-handoff-2026-05-26.md` (build journal).

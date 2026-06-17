@@ -5,9 +5,25 @@ _Written 2026-05-27. Start a fresh Claude Code session with this file open._
 This is the single entry point to continue the TouchDesigner hand-particle work.
 It supersedes nothing — it points at the detailed handoff and tells you exactly
 where to start. Full operator-level detail lives in
-**`docs/touchdesigner-handoff-2026-05-26.md`** (read it once before building).
+**`docs/archive/touchdesigner-handoff-2026-05-26.md`** (read it once before building).
 
 ---
+
+## ✅ 2026-06-17 — "See yourself through the aura"
+
+**The person now shows through wherever the effects cover their body** — the visuals stop
+hiding the performer behind them. Built (all live-verified, 0 errors, 60 fps):
+
+- **`seg_mask` scriptTOP** (`td/seg_mask_callbacks.py`) — exposes MediaPipe's person matte
+  from `mp_engine`, flip-aligned to the camera → feeds **`mask_blur`** for a soft edge.
+- **`aura_warp.frag`** now **dims the radial aura over the body** via a new `uControl` uniform
+  (`personFade=0.7`, `keepFloor=0.15`) so the aura no longer paints over the face/torso.
+- **`reveal` glslTOP** (`td/reveal.frag`) at the **composite tail** blends the camera back over
+  the body: `final = mix(effects, comp_cam, person * uReveal)`, `uReveal=0.6`
+  (set `uReveal=0` for the original look — fully reversible).
+
+Verified live: over the body `corr(final, camera)=0.95`, background unchanged.
+Commits `7ee889b`, `62e9b14`.
 
 ## ★ DIRECTION + RECOVERY — 2026-05-29 (sixth session)
 
@@ -281,7 +297,7 @@ pre-implemented as `build_aura()` and `composite()` in `td/resume_build.py`. Sum
 1. TD open (WIP file), MCP responding.
 2. Start the web app with the pose bridge ON:
    ```powershell
-   $env:VITE_TD_BRIDGE = '1'; npm run dev
+   cd legacy/web; $env:VITE_TD_BRIDGE = '1'; npm run dev
    ```
    (or in browser devtools: `localStorage['td-bridge']='1'`, then reload.)
 3. Open http://localhost:5173, allow camera + mic.
