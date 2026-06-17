@@ -19,10 +19,18 @@
 //   uHands  : xy = left wrist (u,v) ; zw = right wrist (u,v)   [0..1 UV]
 //   uSpeeds : x  = left wrist speed ; y = right wrist speed     [uv/sec]
 //   uMisc   : xy = torso (u,v) ; z = chakra hue (0..1) ; w = heartbeat beat (0..1)
+//   uControl: x = personFade (0..1, how strongly to dim the aura where it covers
+//             the body) ; y = keepFloor (min aura kept over the body so a faint
+//             wrap remains). personFade=0 -> aura behaves exactly as before.
+//
+// INPUT 0 (sTD2DInputs[0]): person segmentation matte from `seg_mask`/`mask_blur`
+//   (0 = background .. 1 = body), already aligned to this shader's vUV. If no input
+//   is wired the sample reads 0, so the aura is unchanged.
 
 uniform vec4 uHands;
 uniform vec4 uSpeeds;
 uniform vec4 uMisc;
+uniform vec4 uControl;
 
 out vec4 fragColor;
 
@@ -69,5 +77,13 @@ void main() {
     vec3 color = TDHSVToRGB(vec3(hue, 0.7, aura));
     color *= 1.0 + beat * 0.4; // pulse with the heartbeat
 
-    fragColor = TDOutputSwizzle(vec4(color, aura * 0.6));
+    // Let the person show through: dim the aura wherever the body matte is hot.
+    // Screen-blending downstream is brightness-driven, so scaling both the colour
+    // and the alpha here lets the camera read through over the body while the glow
+    // stays full strength in the surrounding space.
+    float person = texture(sTD2DInputs[0], uv).r;            // 0 bg .. 1 body
+    float vis    = mix(1.0, max(uControl.y, 1.0 - uControl.x), person);
+    color *= vis;
+
+    fragColor = TDOutputSwizzle(vec4(color, aura * 0.6 * vis));
 }
